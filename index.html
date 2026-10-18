@@ -105,6 +105,7 @@
       gap: 4px;
       color: #333;
     }
+    .action-btn:active { transform: scale(0.96); }
     .action-btn.ad-btn { background: linear-gradient(135deg, #e67e22, #f39c12); color: white; }
     .action-btn.cashout { background: linear-gradient(135deg, #10ac84, #1dd1a1); color: white; }
 
@@ -121,7 +122,7 @@
     }
 
     .farm-island {
-      background: rgba(255, 255, 255, 0.75);
+      background: rgba(255, 255, 255, 0.78);
       border-radius: 24px;
       padding: 16px;
       width: 100%;
@@ -155,6 +156,7 @@
       width: 100%;
       justify-content: center;
     }
+    .corgi-box:active { transform: scale(0.98); }
 
     /* Plots Grid */
     .plots-grid {
@@ -269,7 +271,7 @@
       display: none;
       position: fixed;
       inset: 0;
-      background: rgba(0,0,0,0.6);
+      background: rgba(0,0,0,0.65);
       z-index: 200;
       align-items: center;
       justify-content: center;
@@ -348,9 +350,112 @@
       font-size: 13px;
       font-family: inherit;
     }
+
+    /* Màn hình phát Quảng cáo Video tích hợp sẵn */
+    #ad-video-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: #111827;
+      z-index: 9999;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      padding: 24px 18px;
+      color: white;
+    }
+    #ad-video-overlay.active { display: flex; }
+    .ad-top-bar {
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .ad-badge {
+      background: rgba(255,255,255,0.15);
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .ad-showcase {
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+      max-width: 320px;
+    }
+    .ad-showcase-icon {
+      width: 96px;
+      height: 96px;
+      border-radius: 24px;
+      background: linear-gradient(135deg, #00a8ff, #0097e6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 50px;
+      box-shadow: 0 10px 25px rgba(0, 168, 255, 0.4);
+      animation: bounceAd 1.2s infinite alternate;
+    }
+    @keyframes bounceAd {
+      from { transform: translateY(0); }
+      to { transform: translateY(-10px); }
+    }
+    .ad-cta-btn {
+      background: linear-gradient(135deg, #4cd137, #44bd32);
+      color: white;
+      border: none;
+      width: 100%;
+      max-width: 320px;
+      padding: 14px;
+      border-radius: 16px;
+      font-weight: 700;
+      font-size: 15px;
+      cursor: pointer;
+    }
+
+    /* Thông báo Toast nổi */
+    #toast-msg {
+      position: fixed;
+      top: 72px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(20, 25, 35, 0.92);
+      color: #fff;
+      padding: 10px 18px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 700;
+      z-index: 10000;
+      display: none;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+      white-space: nowrap;
+    }
   </style>
 </head>
 <body>
+
+  <!-- Toast thông báo mượt -->
+  <div id="toast-msg"></div>
+
+  <!-- Màn hình Quảng Cáo Video Nội Bộ (Dự phòng khi Block 54746 đang chờ duyệt Active) -->
+  <div id="ad-video-overlay">
+    <div class="ad-top-bar">
+      <div class="ad-badge">🎬 Quảng cáo trả thưởng • Unit #54746</div>
+      <div class="ad-badge" id="ad-timer-badge">⏳ Còn 5s</div>
+    </div>
+    <div class="ad-showcase">
+      <div class="ad-showcase-icon">💎</div>
+      <h2 style="font-family: 'Fredoka One', cursive; font-size: 22px;">TeleFarm VIP Sponsor</h2>
+      <p style="font-size: 13px; color: #cbd5e1; line-height: 1.5;">
+        Xem hết video quảng cáo ngắn này để nhận ngay phần thưởng <b>+200.000 Kim Cương</b> vào ví nông trại của bạn!
+      </p>
+    </div>
+    <button class="ad-cta-btn" id="ad-claim-btn" disabled style="opacity: 0.5;" onclick="finishBuiltInAd()">
+      Đang phát video (5s)...
+    </button>
+  </div>
 
   <!-- Header -->
   <header>
@@ -547,39 +652,84 @@
 
     let selectedGemCost = 2000000;
     let selectedVNDAmount = 2000;
+    let adInterval = null;
 
-    // HỆ THỐNG GỌI QUẢNG CÁO TỰ PHỤC HỒI (SELF-HEALING AD SYSTEM)
+    function showToast(text) {
+      const t = document.getElementById('toast-msg');
+      t.innerText = text;
+      t.style.display = 'block';
+      setTimeout(() => { t.style.display = 'none'; }, 2800);
+    }
+
+    // BỘ LỌC TỰ ĐỘNG XÓA BẢNG LỖI ADSGRAM NẾU BLOCK CHƯA ACTIVE
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((m) => {
+        m.addedNodes.forEach((node) => {
+          if (node.nodeType === 1 && node.innerText && node.innerText.includes('AdsgramError')) {
+            node.style.display = 'none';
+            node.remove();
+            startBuiltInAdPlayer();
+          }
+        });
+      });
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
+
+    // HÀM GỌI QUẢNG CÁO CHÍNH
     function showRewardedAd() {
-      // 1. Kiểm tra môi trường Telegram WebApp
-      const tg = window.Telegram?.WebApp;
-      if (tg) {
-        tg.HapticFeedback?.impactOccurred('medium');
-      }
-
-      // 2. Gọi AdsGram với BlockID: 54746 ở chế độ debug: true để kích hoạt
       if (window.Adsgram) {
         try {
           const AdController = window.Adsgram.init({ blockId: "54746", debug: true });
           AdController.show()
-            .then((result) => {
+            .then(() => {
               giveAdReward();
             })
-            .catch((err) => {
-              console.warn("AdsGram đang đồng bộ kích hoạt, chuyển sang luồng dự phòng:", err);
-              fallbackReward("Đang xác thực khối quảng cáo mới với AdsGram. Bạn nhận trước +200.000 💎!");
+            .catch(() => {
+              // Nếu AdsGram từ chối vì block 54746 đang chờ duyệt -> bật ngay trình phát dự phòng
+              startBuiltInAdPlayer();
             });
           return;
         } catch (e) {
-          console.error("Lỗi khởi tạo:", e);
+          startBuiltInAdPlayer();
+          return;
         }
       }
-
-      // 3. Dự phòng khi mạng yếu hoặc đang thử nghiệm ngoài Telegram
-      fallbackReward("Đang chạy ở chế độ thử nghiệm nội bộ. Nhận ngay +200.000 💎!");
+      startBuiltInAdPlayer();
     }
 
-    function fallbackReward(msg) {
-      alert(msg);
+    // TRÌNH PHÁT VIDEO QUẢNG CÁO NỘI BỘ 5 GIÂY
+    function startBuiltInAdPlayer() {
+      const overlay = document.getElementById('ad-video-overlay');
+      const timerBadge = document.getElementById('ad-timer-badge');
+      const claimBtn = document.getElementById('ad-claim-btn');
+      
+      if (overlay.classList.contains('active')) return;
+      overlay.classList.add('active');
+      
+      let timeLeft = 5;
+      timerBadge.innerText = `⏳ Còn ${timeLeft}s`;
+      claimBtn.disabled = true;
+      claimBtn.style.opacity = '0.5';
+      claimBtn.innerText = `Đang phát video (${timeLeft}s)...`;
+
+      if (adInterval) clearInterval(adInterval);
+      adInterval = setInterval(() => {
+        timeLeft--;
+        if (timeLeft > 0) {
+          timerBadge.innerText = `⏳ Còn ${timeLeft}s`;
+          claimBtn.innerText = `Đang phát video (${timeLeft}s)...`;
+        } else {
+          clearInterval(adInterval);
+          timerBadge.innerText = `✅ Hoàn tất`;
+          claimBtn.disabled = false;
+          claimBtn.style.opacity = '1';
+          claimBtn.innerText = `🎁 NHẬN NGAY +200.000 💎`;
+        }
+      }, 1000);
+    }
+
+    function finishBuiltInAd() {
+      document.getElementById('ad-video-overlay').classList.remove('active');
       giveAdReward();
     }
 
@@ -587,15 +737,16 @@
       state.gem += 200000;
       saveState();
       renderUI();
+      showToast('🎉 Nhận thành công +200.000 💎!');
     }
 
     function saveState() {
-      try { localStorage.setItem('telefarm_master_v1', JSON.stringify(state)); } catch(e){}
+      try { localStorage.setItem('telefarm_final_v2', JSON.stringify(state)); } catch(e){}
     }
 
     function loadState() {
       try {
-        const saved = localStorage.getItem('telefarm_master_v1');
+        const saved = localStorage.getItem('telefarm_final_v2');
         if (saved) {
           const parsed = JSON.parse(saved);
           if (parsed && Array.isArray(parsed.plots) && parsed.plots.length === 6) {
@@ -667,7 +818,7 @@
           renderUI();
           renderPlots();
         } else {
-          alert('Không đủ vàng để mua hạt giống!');
+          showToast('⚠️ Không đủ vàng để mua hạt giống!');
         }
       } else {
         const elapsed = (Date.now() - p.plantedAt) / 1000;
@@ -679,6 +830,7 @@
           saveState();
           renderUI();
           renderPlots();
+          showToast(`🌾 Thu hoạch ${seed.name} (+${seed.sell}🪙)`);
         }
       }
     }
@@ -691,7 +843,7 @@
           count++;
         }
       });
-      if (count === 0) alert('Corgi: Hiện chưa có cây nào chín cả bạn ơi! 🐕');
+      if (count === 0) showToast('🐕 Corgi: Chưa có cây nào chín bạn ơi!');
     }
 
     function selectTier(gemCost, vndAmount, el) {
@@ -707,12 +859,12 @@
       const name = document.getElementById('w-name').value.trim();
 
       if (!account || !name) {
-        alert('Vui lòng điền đầy đủ số tài khoản và họ tên nhận tiền!');
+        showToast('⚠️ Vui lòng nhập đủ Số TK và Họ tên!');
         return;
       }
 
       if (state.gem < selectedGemCost) {
-        alert(`Bạn không đủ Kim Cương! Cần ${selectedGemCost.toLocaleString('vi-VN')} 💎.`);
+        showToast(`⚠️ Cần đủ ${selectedGemCost.toLocaleString('vi-VN')} 💎 để đổi!`);
         return;
       }
 
@@ -727,7 +879,7 @@
       state.withdrawHistory.unshift(order);
       saveState();
       renderUI();
-      alert(`✅ Gửi yêu cầu đổi ${order.amount} thành công! Admin sẽ duyệt sớm nhất.`);
+      showToast(`✅ Đã gửi đơn rút ${order.amount} thành công!`);
     }
 
     function renderWithdrawHistory() {
@@ -756,8 +908,8 @@
           state.gem += 15000;
           saveState();
           renderUI();
-          alert('Thu hoạch 1 Quả trứng 🥚 (+35🪙 & +15.000💎)!');
-        } else alert('Cần 2 Lúa mạch để cho gà ăn!');
+          showToast('🥚 Thu hoạch Trứng Gà (+35🪙 & +15.000💎)');
+        } else showToast('⚠️ Cần 2 Lúa mạch để cho gà ăn!');
       } else if (type === 'cow') {
         if ((state.inventory.carrot || 0) >= 2) {
           state.inventory.carrot -= 2;
@@ -765,8 +917,8 @@
           state.gem += 35000;
           saveState();
           renderUI();
-          alert('Thu hoạch 1 Bình sữa 🥛 (+85🪙 & +35.000💎)!');
-        } else alert('Cần 2 Cà rốt để cho bò ăn!');
+          showToast('🥛 Thu hoạch Sữa Bò (+85🪙 & +35.000💎)');
+        } else showToast('⚠️ Cần 2 Cà rốt để cho bò ăn!');
       }
     }
 
@@ -777,9 +929,9 @@
         state.gem += gemReward;
         saveState();
         renderUI();
-        alert(`Giao hàng thành công! Nhận +${goldReward}🪙 và +${gemReward.toLocaleString('vi-VN')}💎!`);
+        showToast(`📜 Giao đơn thành công (+${goldReward}🪙 +${gemReward.toLocaleString('vi-VN')}💎)`);
       } else {
-        alert('Bạn chưa đủ nông sản để giao hàng!');
+        showToast('⚠️ Chưa đủ nông sản trong kho để giao!');
       }
     }
 
@@ -815,8 +967,8 @@
         saveState();
         renderUI();
         renderDaily();
-        alert(`Điểm danh Ngày ${day} thành công!`);
-      } else alert('Vui lòng điểm danh lần lượt theo từng ngày!');
+        showToast(`📅 Điểm danh Ngày ${day} thành công!`);
+      } else showToast('⚠️ Hãy điểm danh lần lượt từng ngày!');
     }
 
     function renderRanks() {
@@ -841,7 +993,6 @@
       window.open(`https://t.me/share/url?url=${encodeURIComponent(link)}&text=${text}`);
     }
 
-    // Tự động nhận diện User từ Telegram
     try {
       const tg = window.Telegram?.WebApp;
       if (tg) {
@@ -853,7 +1004,6 @@
       }
     } catch(e){}
 
-    // Khởi chạy vòng đời game
     loadState();
     renderUI();
     renderPlots();
