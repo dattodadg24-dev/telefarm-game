@@ -1,0 +1,1760 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>TeleFarm: Nông Trại Trên Mây</title>
+    <!-- Telegram WebApp SDK -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Google Fonts: Fredoka & Nunito for cute game look -->
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --font-display: 'Fredoka', sans-serif;
+            --font-body: 'Nunito', sans-serif;
+        }
+        * {
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-touch-callout: none;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: var(--font-body);
+            background: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%);
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            height: 100dvh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .font-display {
+            font-family: var(--font-display);
+        }
+        /* Mobile Phone Wrapper for Desktop Preview, seamless on actual mobile */
+        #app-frame {
+            width: 100%;
+            max-width: 440px;
+            height: 100dvh;
+            max-height: 920px;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            background: linear-gradient(180deg, #7dd3fc 0%, #bae6fd 26%, #86efac 26.5%, #4ade80 100%);
+            box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.7);
+            transition: background 1s ease;
+        }
+        @media (min-width: 480px) {
+            #app-frame {
+                height: 94dvh;
+                border-radius: 36px;
+                border: 6px solid #334155;
+            }
+        }
+
+        /* Weather States */
+        #app-frame.weather-rain {
+            background: linear-gradient(180deg, #475569 0%, #64748b 26%, #34d399 26.5%, #10b981 100%);
+        }
+        #app-frame.weather-golden {
+            background: linear-gradient(180deg, #fb923c 0%, #fde047 26%, #a3e635 26.5%, #4ade80 100%);
+        }
+
+        /* 3D Game Tactile Buttons */
+        .btn-3d-amber {
+            background: linear-gradient(180deg, #fbbf24 0%, #f59e0b 100%);
+            box-shadow: 0 4px 0 #b45309, 0 6px 10px rgba(0,0,0,0.2);
+            transition: all 0.08s ease;
+        }
+        .btn-3d-amber:active {
+            transform: translateY(4px);
+            box-shadow: 0 0px 0 #b45309, 0 2px 4px rgba(0,0,0,0.2);
+        }
+        .btn-3d-green {
+            background: linear-gradient(180deg, #4ade80 0%, #16a34a 100%);
+            box-shadow: 0 4px 0 #15803d, 0 6px 10px rgba(0,0,0,0.2);
+            transition: all 0.08s ease;
+        }
+        .btn-3d-green:active {
+            transform: translateY(4px);
+            box-shadow: 0 0px 0 #15803d, 0 2px 4px rgba(0,0,0,0.2);
+        }
+        .btn-3d-blue {
+            background: linear-gradient(180deg, #38bdf8 0%, #0284c7 100%);
+            box-shadow: 0 4px 0 #0369a1, 0 6px 10px rgba(0,0,0,0.2);
+            transition: all 0.08s ease;
+        }
+        .btn-3d-blue:active {
+            transform: translateY(4px);
+            box-shadow: 0 0px 0 #0369a1, 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        /* Farm Soil Plot Styling */
+        .farm-plot {
+            position: relative;
+            aspect-ratio: 1 / 1;
+            border-radius: 18px;
+            transition: transform 0.12s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease;
+            cursor: pointer;
+        }
+        .farm-plot:active {
+            transform: scale(0.91);
+        }
+        .soil-empty {
+            background: radial-gradient(circle at 30% 30%, #9a5b32, #78350f);
+            border: 3px solid #5c280b;
+            box-shadow: inset 0 4px 6px rgba(0,0,0,0.35), 0 6px 0 #451a03, 0 8px 12px rgba(0,0,0,0.25);
+        }
+        .soil-watered {
+            background: radial-gradient(circle at 30% 30%, #5c280b, #3b1704);
+            border: 3px solid #290f02;
+            box-shadow: inset 0 5px 8px rgba(0,0,0,0.6), 0 6px 0 #290f02, 0 8px 12px rgba(0,0,0,0.25);
+        }
+        .soil-locked {
+            background: repeating-linear-gradient(45deg, #65a30d, #65a30d 10px, #4d7c0f 10px, #4d7c0f 20px);
+            border: 3px dashed #365314;
+            box-shadow: 0 5px 0 #365314;
+        }
+        .soil-ready {
+            box-shadow: inset 0 4px 6px rgba(0,0,0,0.35), 0 6px 0 #451a03, 0 0 18px 4px rgba(250, 204, 21, 0.85);
+            border-color: #fde047;
+        }
+
+        /* Animations */
+        @keyframes floatCrop {
+            0%, 100% { transform: translateY(0px) scale(1); }
+            50% { transform: translateY(-5px) scale(1.06); }
+        }
+        .animate-crop {
+            animation: floatCrop 2.2s ease-in-out infinite;
+        }
+
+        @keyframes readyBounce {
+            0%, 100% { transform: translateY(0) scale(1.05) rotate(-3deg); }
+            50% { transform: translateY(-8px) scale(1.15) rotate(3deg); }
+        }
+        .animate-ready {
+            animation: readyBounce 1s ease-in-out infinite;
+        }
+
+        @keyframes cloudMove {
+            0% { transform: translateX(-120px); }
+            100% { transform: translateX(480px); }
+        }
+        .cloud-1 { animation: cloudMove 28s linear infinite; }
+        .cloud-2 { animation: cloudMove 38s linear infinite; animation-delay: -14s; }
+
+        @keyframes floatUpFade {
+            0% { opacity: 1; transform: translateY(0) scale(0.8); }
+            40% { opacity: 1; transform: translateY(-28px) scale(1.1); }
+            100% { opacity: 0; transform: translateY(-55px) scale(0.95); }
+        }
+        .floating-text {
+            position: absolute;
+            pointer-events: none;
+            z-index: 100;
+            font-weight: 900;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.6);
+            animation: floatUpFade 1.15s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        @keyframes rainFall {
+            0% { background-position: 0 0; }
+            100% { background-position: -100px 400px; }
+        }
+        .rain-overlay {
+            background-image: linear-gradient(170deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.35) 50%, rgba(255,255,255,0) 100%);
+            background-size: 2px 35px;
+            animation: rainFall 0.6s linear infinite;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 5px; height: 5px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.2); border-radius: 99px; }
+    </style>
+</head>
+<body>
+
+<div id="app-frame">
+    <!-- Decorative Sky & Clouds -->
+    <div class="absolute top-6 left-0 w-full h-32 pointer-events-none overflow-hidden z-0">
+        <div class="cloud-1 absolute top-2 text-white/80 text-5xl drop-shadow"><i class="fa-solid fa-cloud"></i></div>
+        <div class="cloud-2 absolute top-10 text-white/60 text-4xl drop-shadow"><i class="fa-solid fa-cloud"></i></div>
+        <!-- Sun / Weather Icon in Sky -->
+        <div id="sky-orb" class="absolute top-3 right-6 w-12 h-12 rounded-full bg-yellow-300 shadow-[0_0_25px_#fde047] flex items-center justify-center text-amber-600 text-2xl transition-all duration-700">
+            <i class="fa-solid fa-sun animate-spin" style="animation-duration: 18s;"></i>
+        </div>
+    </div>
+
+    <!-- Rain Effect Layer -->
+    <div id="rain-layer" class="hidden absolute inset-0 pointer-events-none z-10 opacity-40" style="background: repeating-linear-gradient(105deg, transparent, transparent 18px, rgba(186, 230, 253, 0.45) 18px, rgba(186, 230, 253, 0.45) 20px);"></div>
+
+    <!-- Telegram Native-Style Top Bar -->
+    <header class="relative z-20 pt-2 px-3 pb-1.5 flex flex-col gap-1.5 bg-slate-900/35 backdrop-blur-md border-b border-white/20">
+        <div class="flex items-center justify-between">
+            <!-- Player Profile & Level -->
+            <div class="flex items-center gap-2">
+                <div class="relative">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-500 to-yellow-300 p-0.5 shadow-md">
+                        <div class="w-full h-full bg-slate-800 rounded-[10px] flex items-center justify-center text-xl">
+                            👨‍🌾
+                        </div>
+                    </div>
+                    <span id="hud-level" class="absolute -bottom-1 -right-1 bg-emerald-500 text-white text-[10px] font-black px-1.5 py-0.2 rounded-full border border-slate-900 shadow">
+                        Lv.1
+                    </span>
+                </div>
+                <div>
+                    <div class="flex items-center gap-1.5">
+                        <h1 id="hud-username" class="text-white font-display font-bold text-sm leading-tight drop-shadow">Nông Dân Tele</h1>
+                        <span class="bg-sky-500/30 border border-sky-300/40 text-sky-100 text-[9px] font-extrabold px-1.5 py-0.5 rounded-full">TMA PRO</span>
+                    </div>
+                    <!-- EXP Progress Bar -->
+                    <div class="w-28 h-2 bg-slate-950/70 rounded-full overflow-hidden mt-1 p-0.5 border border-white/10">
+                        <div id="hud-exp-bar" class="h-full bg-gradient-to-r from-emerald-400 to-lime-300 rounded-full transition-all duration-300" style="width: 15%;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Weather & Publisher Pitch Controls -->
+            <div class="flex items-center gap-1.5">
+                <button onclick="cycleWeather()" id="btn-weather" class="bg-white/20 hover:bg-white/30 active:scale-95 text-white px-2.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1 backdrop-blur border border-white/25 shadow-sm" title="Đổi thời tiết">
+                    <i class="fa-solid fa-sun text-yellow-300"></i>
+                    <span id="weather-label" class="hidden sm:inline">Nắng Đẹp</span>
+                </button>
+                <button onclick="toggleSound()" id="btn-sound" class="w-8 h-8 rounded-xl bg-white/20 hover:bg-white/30 active:scale-95 text-white flex items-center justify-center backdrop-blur border border-white/25">
+                    <i id="icon-sound" class="fa-solid fa-volume-high text-xs"></i>
+                </button>
+                <button onclick="openPublisherModal()" class="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white px-2.5 py-1.5 rounded-xl text-xs font-extrabold flex items-center gap-1 shadow-md border border-indigo-300/40 animate-pulse">
+                    <i class="fa-solid fa-rocket"></i>
+                    <span>Launchpad</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Currency & Stamina Row -->
+        <div class="grid grid-cols-3 gap-1.5 pt-0.5">
+            <!-- Gold Coins -->
+            <div class="bg-slate-950/60 border border-amber-400/30 rounded-xl px-2.5 py-1 flex items-center justify-between">
+                <div class="flex items-center gap-1.5">
+                    <span class="text-base">🪙</span>
+                    <span id="hud-coins" class="text-amber-300 font-display font-bold text-sm">250</span>
+                </div>
+                <button onclick="switchTab('orders')" class="text-amber-400 hover:text-amber-200 text-[10px]"><i class="fa-solid fa-circle-plus"></i></button>
+            </div>
+
+            <!-- TeleGems ($FARM Token) -->
+            <div class="bg-slate-950/60 border border-cyan-400/30 rounded-xl px-2.5 py-1 flex items-center justify-between">
+                <div class="flex items-center gap-1.5">
+                    <span class="text-base">💎</span>
+                    <span id="hud-gems" class="text-cyan-300 font-display font-bold text-sm">15</span>
+                </div>
+                <button onclick="openAirdropModal()" class="bg-cyan-500/30 text-cyan-200 px-1 rounded text-[9px] font-bold">TON</button>
+            </div>
+
+            <!-- Energy / Stamina -->
+            <div class="bg-slate-950/60 border border-lime-400/30 rounded-xl px-2.5 py-1 flex items-center justify-between">
+                <div class="flex items-center gap-1">
+                    <span class="text-base">⚡</span>
+                    <span id="hud-energy" class="text-lime-300 font-display font-bold text-xs">50/50</span>
+                </div>
+                <span class="text-[9px] text-lime-200/70 font-bold">+1/3s</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- MAIN VIEWPORT -->
+    <main class="relative z-10 flex-1 overflow-y-auto overflow-x-hidden px-3 pt-2 pb-20 flex flex-col justify-between">
+
+        <!-- TAB 1: NÔNG TRẠI (MAIN FARM VIEW) -->
+        <section id="tab-farm" class="flex-1 flex flex-col justify-between gap-2">
+            <!-- Top Farm Scenery Banner: Barn & Mascot Pet -->
+            <div class="bg-white/85 backdrop-blur-md rounded-2xl p-2.5 shadow-lg border-2 border-white flex items-center justify-between">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-12 h-12 rounded-2xl bg-red-100 border-2 border-red-300 flex items-center justify-center text-3xl shadow-inner">
+                        🏡
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-1.5">
+                            <span class="text-xs font-black uppercase tracking-wider text-emerald-800">Trang Trại Mây Xanh</span>
+                            <span id="weather-buff-badge" class="bg-amber-100 text-amber-800 text-[10px] font-extrabold px-1.5 py-0.5 rounded-md border border-amber-300">Tốc độ: 100%</span>
+                        </div>
+                        <p id="farm-hint-text" class="text-[11px] text-slate-600 font-semibold mt-0.5">
+                            Chạm vào ô đất trống để gieo hạt hoặc thu hoạch!
+                        </p>
+                    </div>
+                </div>
+                <!-- Auto Harvest Dog Helper -->
+                <button onclick="triggerPetHelper()" class="relative group bg-amber-50 hover:bg-amber-100 active:scale-95 border-2 border-amber-300 rounded-2xl p-1.5 flex flex-col items-center justify-center min-w-[64px] transition">
+                    <span class="text-2xl group-hover:scale-110 transition">🐕</span>
+                    <span id="pet-status" class="text-[9px] font-black text-amber-900">Gâu! Thu hộ</span>
+                </button>
+            </div>
+
+            <!-- 3x3 Interactive Isometric-Feel Soil Grid -->
+            <div class="my-auto py-1">
+                <div id="farm-grid" class="grid grid-cols-3 gap-3 max-w-[340px] mx-auto p-3 bg-emerald-700/35 rounded-3xl border-4 border-emerald-800/30 shadow-inner">
+                    <!-- Rendered dynamically via JS -->
+                </div>
+            </div>
+
+            <!-- Bottom Action Dock: Tools & Seed Selector -->
+            <div class="bg-amber-950/90 backdrop-blur-md rounded-2xl p-2.5 border-2 border-amber-700 shadow-xl text-white">
+                <!-- Tool Selection Tabs -->
+                <div class="flex items-center justify-between gap-1.5 mb-2">
+                    <button onclick="selectTool('seed')" id="tool-seed" class="flex-1 py-1.5 px-2 rounded-xl font-extrabold text-xs flex items-center justify-center gap-1.5 bg-amber-500 text-slate-950 shadow">
+                        <span>🌱</span> Gieo Hạt
+                    </button>
+                    <button onclick="selectTool('water')" id="tool-water" class="flex-1 py-1.5 px-2 rounded-xl font-extrabold text-xs flex items-center justify-center gap-1.5 bg-amber-900/80 text-amber-200 hover:bg-amber-800">
+                        <span>💧</span> Tưới Nước <span class="text-[10px] bg-sky-500/30 px-1 rounded text-sky-200">x1.5</span>
+                    </button>
+                    <button onclick="selectTool('fert')" id="tool-fert" class="flex-1 py-1.5 px-2 rounded-xl font-extrabold text-xs flex items-center justify-center gap-1.5 bg-amber-900/80 text-amber-200 hover:bg-amber-800">
+                        <span>⚡</span> Phân Bón (<span id="fert-count">3</span>)
+                    </button>
+                </div>
+
+                <!-- Horizontal Seed Bag Carousel -->
+                <div id="seed-selector-bar" class="flex items-center gap-2 overflow-x-auto pb-1">
+                    <!-- Populated via JS -->
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 2: CHUỒNG TRẠI & CHẾ BIẾN (RANCH & FACTORY) -->
+        <section id="tab-ranch" class="hidden flex-1 flex flex-col gap-3">
+            <div class="bg-white/90 rounded-2xl p-3 border-2 border-white shadow-md">
+                <h2 class="font-display font-bold text-base text-slate-800 flex items-center gap-2">
+                    <span>🐄</span> Chăn Nuôi & Nhà Máy Chế Biến
+                </h2>
+                <p class="text-xs text-slate-600">Cho vật nuôi ăn nông sản hoặc đưa vào máy chế biến để nhân đôi lợi nhuận!</p>
+            </div>
+
+            <div id="ranch-list" class="flex-1 flex flex-col gap-2.5 overflow-y-auto pr-0.5">
+                <!-- Populated dynamically via JS -->
+            </div>
+        </section>
+
+        <!-- TAB 3: ĐƠN HÀNG & CHỢ (ORDERS & SILO MARKET) -->
+        <section id="tab-orders" class="hidden flex-1 flex flex-col gap-3">
+            <!-- Order Board -->
+            <div class="bg-amber-50/95 rounded-2xl p-3 border-2 border-amber-300 shadow-md">
+                <div class="flex items-center justify-between mb-2">
+                    <h2 class="font-display font-bold text-base text-amber-900 flex items-center gap-1.5">
+                        <span>🚚</span> Bảng Đơn Hàng Làng Mây
+                    </h2>
+                    <span class="text-[11px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full border border-emerald-300">Thưởng +EXP & Gem</span>
+                </div>
+                <div id="orders-container" class="flex flex-col gap-2">
+                    <!-- Dynamic NPC Orders -->
+                </div>
+            </div>
+
+            <!-- Barn Inventory Storage -->
+            <div class="bg-white/95 rounded-2xl p-3 border-2 border-white shadow-md flex-1 flex flex-col">
+                <div class="flex items-center justify-between mb-2">
+                    <h3 class="font-display font-bold text-sm text-slate-800 flex items-center gap-1.5">
+                        <span>📦</span> Kho Nông Sản Của Bạn
+                    </h3>
+                    <button onclick="sellAllBarn()" class="btn-3d-amber text-slate-950 font-black text-xs px-3 py-1 rounded-xl">
+                        Bán Nhanh Tất Cả
+                    </button>
+                </div>
+                <div id="inventory-grid" class="grid grid-cols-3 gap-2 overflow-y-auto">
+                    <!-- Dynamic Inventory Items -->
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 4: NHIỆM VỤ & BẠN BÈ TELEGRAM (SOCIAL & QUESTS) -->
+        <section id="tab-quests" class="hidden flex-1 flex flex-col gap-3">
+            <!-- Viral Telegram Referral Card -->
+            <div class="bg-gradient-to-br from-sky-500 to-blue-700 rounded-2xl p-3.5 text-white shadow-lg border-2 border-sky-300">
+                <div class="flex items-start justify-between">
+                    <div>
+                        <span class="bg-white/20 text-[10px] font-black uppercase px-2 py-0.5 rounded-full">Telegram Viral Loop</span>
+                        <h2 class="font-display font-bold text-lg mt-1">Mời Bạn Bè Cùng Trồng!</h2>
+                        <p class="text-xs text-sky-100 mt-0.5">Nhận ngay <strong class="text-yellow-300">+500 🪙 & +10 💎</strong> cho mỗi người bạn mở Mini App qua link của bạn.</p>
+                    </div>
+                    <div class="text-4xl">🤝</div>
+                </div>
+                <div class="flex gap-2 mt-3">
+                    <button onclick="shareTelegramInvite()" class="flex-1 btn-3d-amber text-slate-950 font-black text-xs py-2.5 px-3 rounded-xl flex items-center justify-center gap-1.5">
+                        <i class="fa-brands fa-telegram text-base"></i> Mời Bạn Qua Telegram
+                    </button>
+                    <button onclick="copyInviteLink()" class="bg-white/20 hover:bg-white/30 active:scale-95 px-3 rounded-xl text-white font-bold text-xs flex items-center justify-center">
+                        <i class="fa-regular fa-copy"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Daily Quests List -->
+            <div class="bg-white/95 rounded-2xl p-3 border-2 border-white shadow-md flex-1 flex flex-col">
+                <h3 class="font-display font-bold text-sm text-slate-800 mb-2 flex items-center gap-1.5">
+                    <span>🎯</span> Nhiệm Vụ Nông Dân Hàng Ngày
+                </h3>
+                <div id="quests-list" class="flex flex-col gap-2 overflow-y-auto">
+                    <!-- Populated via JS -->
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- BOTTOM NAVIGATION BAR -->
+    <nav class="absolute bottom-0 left-0 w-full z-30 bg-slate-900/95 backdrop-blur-md border-t border-white/15 px-2 py-1.5">
+        <div class="grid grid-cols-4 gap-1.5">
+            <button onclick="switchTab('farm')" id="nav-farm" class="nav-btn flex flex-col items-center justify-center py-1 rounded-xl bg-emerald-500/20 text-emerald-300 border border-emerald-400/30">
+                <span class="text-lg leading-none">🌱</span>
+                <span class="text-[10px] font-extrabold mt-0.5">Nông Trại</span>
+            </button>
+            <button onclick="switchTab('ranch')" id="nav-ranch" class="nav-btn flex flex-col items-center justify-center py-1 rounded-xl text-slate-400 hover:text-white">
+                <span class="text-lg leading-none">🐄</span>
+                <span class="text-[10px] font-extrabold mt-0.5">Chăn Nuôi</span>
+            </button>
+            <button onclick="switchTab('orders')" id="nav-orders" class="nav-btn relative flex flex-col items-center justify-center py-1 rounded-xl text-slate-400 hover:text-white">
+                <span class="text-lg leading-none">🚚</span>
+                <span class="text-[10px] font-extrabold mt-0.5">Đơn Hàng</span>
+                <span id="order-ready-dot" class="hidden absolute top-1 right-5 w-2.5 h-2.5 bg-red-500 rounded-full border border-slate-900 animate-ping"></span>
+            </button>
+            <button onclick="switchTab('quests')" id="nav-quests" class="nav-btn relative flex flex-col items-center justify-center py-1 rounded-xl text-slate-400 hover:text-white">
+                <span class="text-lg leading-none">🎁</span>
+                <span class="text-[10px] font-extrabold mt-0.5">Nhiệm Vụ</span>
+                <span id="quest-ready-dot" class="hidden absolute top-1 right-5 w-2.5 h-2.5 bg-amber-400 rounded-full border border-slate-900"></span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- MODAL 1: PUBLISHER LAUNCHPAD & TELEGRAM BOT DEPLOY GUIDE -->
+    <div id="modal-publisher" class="hidden absolute inset-0 z-50 bg-slate-950/80 backdrop-blur-sm p-3 flex items-center justify-center">
+        <div class="bg-slate-900 border-2 border-indigo-500/50 rounded-3xl w-full max-h-[88vh] flex flex-col text-white shadow-2xl overflow-hidden">
+            <div class="bg-gradient-to-r from-indigo-600 to-purple-600 px-4 py-3 flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <span class="text-xl">🚀</span>
+                    <div>
+                        <h3 class="font-display font-bold text-sm">Hồ Sơ Phát Hành Game (Publisher Kit)</h3>
+                        <p class="text-[10px] text-indigo-100">Hướng dẫn đưa game lên Telegram Bot trong 3 phút</p>
+                    </div>
+                </div>
+                <button onclick="closePublisherModal()" class="w-7 h-7 rounded-full bg-black/20 flex items-center justify-center text-white hover:bg-black/40">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <div class="p-4 overflow-y-auto space-y-3 text-xs leading-relaxed text-slate-200">
+                <div class="bg-slate-800/90 border border-slate-700 rounded-2xl p-3">
+                    <h4 class="font-extrabold text-amber-400 uppercase text-[11px] mb-1">1. Góc Nhìn Nhà Phát Hành (Game Design & Monetization)</h4>
+                    <ul class="list-disc pl-4 space-y-1 text-slate-300">
+                        <li><strong>Core Loop Gây Nghiện:</strong> Gieo hạt (1 chạm) ➔ Thời tiết ngẫu nhiên ➔ Chế biến sâu (Sữa, Bánh Mì) ➔ Giao đơn hàng NPC lấy Gem.</li>
+                        <li><strong>Viral Loop Tự Nhiên:</strong> Tích hợp <code>Telegram.WebApp.openTelegramLink</code> để chia sẻ link mời bạn bè nhận đất & hạt giống hiếm.</li>
+                        <li><strong>Doanh Thu (Monetization):</strong> Bán gói <em>Chó Corgi Thu Hoạch Tự Động</em> bằng <strong>Telegram Stars</strong> hoặc nạp <strong>TON</strong>.</li>
+                    </ul>
+                </div>
+
+                <div class="bg-slate-800/90 border border-slate-700 rounded-2xl p-3">
+                    <h4 class="font-extrabold text-sky-400 uppercase text-[11px] mb-1">2. Cách Đưa File Này Lên Telegram Thật (3 Bước)</h4>
+                    <ol class="list-decimal pl-4 space-y-1.5 text-slate-300">
+                        <li><strong>Bước 1 (Host HTTPS):</strong> Tải file <code>telefarm_tma.html</code> này lên <strong>GitHub Pages</strong>, <strong>Vercel</strong> hoặc <strong>Cloudflare Pages</strong> (hoàn toàn miễn phí, có sẵn HTTPS).</li>
+                        <li><strong>Bước 2 (Tạo Bot với @BotFather):</strong> Mở Telegram, chat với <code>@BotFather</code> ➔ Gõ lệnh <code>/newbot</code> để tạo Bot, sau đó gõ <code>/newapp</code> và dán link HTTPS ở Bước 1 vào.</li>
+                        <li><strong>Bước 3 (Chạy Fullscreen):</strong> File này đã nhúng sẵn <code>telegram-web-app.js</code>, tự động đọc <code>initDataUnsafe.user.first_name</code>, kích hoạt rung phản hồi <code>HapticFeedback</code> và bung toàn màn hình!</li>
+                    </ol>
+                </div>
+
+                <div class="bg-emerald-950/60 border border-emerald-500/40 rounded-2xl p-3 flex items-center justify-between">
+                    <div>
+                        <div class="font-extrabold text-emerald-300 text-xs">Chế Độ Hack Thử Nghiệm (Publisher Sandbox)</div>
+                        <div class="text-[11px] text-emerald-100/80">Bơm tài nguyên để test toàn bộ tính năng cấp cao</div>
+                    </div>
+                    <button onclick="grantPublisherBoost()" class="btn-3d-green text-white font-black px-3 py-2 rounded-xl text-xs shrink-0">
+                        +5,000 🪙 & Lv.5
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 2: AIRDROP / TON WALLET CONNECT SIMULATION -->
+    <div id="modal-airdrop" class="hidden absolute inset-0 z-50 bg-slate-950/80 backdrop-blur-sm p-3 flex items-center justify-center">
+        <div class="bg-slate-900 border-2 border-cyan-400/50 rounded-3xl w-full max-w-sm p-4 text-white shadow-2xl text-center">
+            <div class="w-16 h-16 rounded-2xl bg-cyan-500/20 border border-cyan-400/40 mx-auto flex items-center justify-center text-4xl mb-2">
+                💎
+            </div>
+            <h3 class="font-display font-bold text-lg text-cyan-300">Quỹ Thưởng $FARM & TON</h3>
+            <p class="text-xs text-slate-300 mt-1">Tích lũy Kim Cương xanh từ Đơn Hàng Làng Mây và Nhiệm Vụ để quy đổi vật phẩm giới hạn hoặc Airdrop mùa 1!</p>
+
+            <div class="bg-slate-800 rounded-2xl p-3 my-3 flex items-center justify-around border border-slate-700">
+                <div>
+                    <div class="text-[10px] text-slate-400">Số dư hiện tại</div>
+                    <div id="modal-gem-balance" class="font-display font-bold text-lg text-cyan-300">15 💎</div>
+                </div>
+                <div class="h-8 w-px bg-slate-700"></div>
+                <div>
+                    <div class="text-[10px] text-slate-400">Đổi Phân Bón Siêu Tốc</div>
+                    <button onclick="buyFertilizerWithGems()" class="mt-0.5 bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-black text-xs px-2.5 py-1 rounded-lg">
+                        5 💎 ➔ +5 Phân Bón
+                    </button>
+                </div>
+            </div>
+
+            <button onclick="closeAirdropModal()" class="w-full py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 font-bold text-xs text-slate-200">
+                Đóng Cửa Sổ
+            </button>
+        </div>
+    </div>
+
+    <!-- Toast Notification Container -->
+    <div id="toast-box" class="pointer-events-none absolute top-24 left-1/2 -translate-x-1/2 z-50 flex flex-col items-center gap-1 w-11/12"></div>
+</div>
+
+<script>
+    /**************************************************************
+     * 1. TELEGRAM MINI APP (TMA) SDK & SOUND SYNTHESIZER
+     **************************************************************/
+    const tg = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null;
+    let soundEnabled = true;
+    let audioCtx = null;
+
+    function initTelegramSDK() {
+        if (!tg) return;
+        try {
+            tg.ready();
+            tg.expand();
+            if (tg.setHeaderColor) tg.setHeaderColor('#0f172a');
+            if (tg.setBackgroundColor) tg.setBackgroundColor('#0f172a');
+
+            const user = tg.initDataUnsafe && tg.initDataUnsafe.user;
+            if (user && user.first_name) {
+                const fullName = [user.first_name, user.last_name].filter(Boolean).join(' ');
+                document.getElementById('hud-username').textContent = fullName;
+            }
+        } catch (err) {
+            console.warn('Telegram WebApp SDK fallback mode:', err);
+        }
+    }
+
+    function triggerHaptic(type = 'light') {
+        if (tg && tg.HapticFeedback) {
+            try {
+                if (type === 'success' || type === 'warning' || type === 'error') {
+                    tg.HapticFeedback.notificationOccurred(type);
+                } else {
+                    tg.HapticFeedback.impactOccurred(type);
+                }
+            } catch (e) {}
+        }
+    }
+
+    function playSFX(type) {
+        if (!soundEnabled) return;
+        try {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+            const now = audioCtx.currentTime;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+
+            if (type === 'plant') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(320, now);
+                osc.frequency.exponentialRampToValueAtTime(580, now + 0.09);
+                gain.gain.setValueAtTime(0.15, now);
+                gain.gain.linearRampToValueAtTime(0.01, now + 0.1);
+                osc.start(now);
+                osc.stop(now + 0.1);
+            } else if (type === 'water') {
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(600, now);
+                osc.frequency.exponentialRampToValueAtTime(280, now + 0.14);
+                gain.gain.setValueAtTime(0.18, now);
+                gain.gain.linearRampToValueAtTime(0.01, now + 0.15);
+                osc.start(now);
+                osc.stop(now + 0.15);
+            } else if (type === 'harvest') {
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(523.25, now); // C5
+                osc.frequency.setValueAtTime(659.25, now + 0.06); // E5
+                osc.frequency.setValueAtTime(783.99, now + 0.12); // G5
+                osc.frequency.setValueAtTime(1046.5, now + 0.18); // C6
+                gain.gain.setValueAtTime(0.2, now);
+                gain.gain.linearRampToValueAtTime(0.01, now + 0.3);
+                osc.start(now);
+                osc.stop(now + 0.3);
+            } else if (type === 'coin') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(987.77, now); // B5
+                osc.frequency.setValueAtTime(1318.51, now + 0.07); // E6
+                gain.gain.setValueAtTime(0.2, now);
+                gain.gain.linearRampToValueAtTime(0.01, now + 0.25);
+                osc.start(now);
+                osc.stop(now + 0.25);
+            } else if (type === 'error') {
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(160, now);
+                osc.frequency.linearRampToValueAtTime(110, now + 0.15);
+                gain.gain.setValueAtTime(0.12, now);
+                gain.gain.linearRampToValueAtTime(0.01, now + 0.16);
+                osc.start(now);
+                osc.stop(now + 0.16);
+            }
+        } catch (e) {}
+    }
+
+    function toggleSound() {
+        soundEnabled = !soundEnabled;
+        const icon = document.getElementById('icon-sound');
+        icon.className = soundEnabled ? 'fa-solid fa-volume-high text-xs' : 'fa-solid fa-volume-xmark text-xs text-rose-300';
+        showToast(soundEnabled ? '🔊 Đã bật âm thanh' : '🔇 Đã tắt âm thanh');
+    }
+
+    /**************************************************************
+     * 2. GAME DATABASE & CONFIGURATIONS
+     **************************************************************/
+    const CROPS = {
+        wheat: {
+            id: 'wheat',
+            name: 'Lúa Mạch',
+            icon: '🌾',
+            seedCost: 5,
+            sellPrice: 12,
+            growTime: 6, // seconds
+            exp: 4,
+            unlockLevel: 1
+        },
+        corn: {
+            id: 'corn',
+            name: 'Bắp Mỹ',
+            icon: '🌽',
+            seedCost: 12,
+            sellPrice: 28,
+            growTime: 12,
+            exp: 8,
+            unlockLevel: 1
+        },
+        carrot: {
+            id: 'carrot',
+            name: 'Cà Rốt',
+            icon: '🥕',
+            seedCost: 22,
+            sellPrice: 52,
+            growTime: 18,
+            exp: 14,
+            unlockLevel: 2
+        },
+        strawberry: {
+            id: 'strawberry',
+            name: 'Dâu Tây',
+            icon: '🍓',
+            seedCost: 45,
+            sellPrice: 105,
+            growTime: 26,
+            exp: 25,
+            unlockLevel: 3
+        },
+        pumpkin: {
+            id: 'pumpkin',
+            name: 'Bí Ngô Vàng',
+            icon: '🎃',
+            seedCost: 90,
+            sellPrice: 210,
+            growTime: 40,
+            exp: 45,
+            unlockLevel: 4
+        },
+        golden_apple: {
+            id: 'golden_apple',
+            name: 'Táo Thần TON',
+            icon: '🍎',
+            seedCost: 180,
+            sellPrice: 440,
+            growTime: 60,
+            exp: 90,
+            unlockLevel: 5
+        }
+    };
+
+    const PRODUCTS = {
+        egg: { id: 'egg', name: 'Trứng Gà Tươi', icon: '🥚', sellPrice: 45 },
+        milk: { id: 'milk', name: 'Sữa Bò Nguyên Chất', icon: '🥛', sellPrice: 95 },
+        bread: { id: 'bread', name: 'Bánh Mì Nóng', icon: '🥖', sellPrice: 110 },
+        cake: { id: 'cake', name: 'Bánh Kem Dâu', icon: '🍰', sellPrice: 260 }
+    };
+
+    const RANCH_UNITS = [
+        {
+            id: 'chicken_coop',
+            name: 'Chuồng Gà Đẻ Trứng',
+            icon: '🐔',
+            inputId: 'wheat',
+            inputQty: 2,
+            outputId: 'egg',
+            outputIcon: '🥚',
+            outputName: 'Trứng Gà',
+            cycleTime: 10,
+            exp: 12,
+            costCoins: 80
+        },
+        {
+            id: 'cow_barn',
+            name: 'Trại Bò Sữa Hà Lan',
+            icon: '🐄',
+            inputId: 'corn',
+            inputQty: 2,
+            outputId: 'milk',
+            outputIcon: '🥛',
+            outputName: 'Sữa Tươi',
+            cycleTime: 16,
+            exp: 22,
+            costCoins: 220
+        },
+        {
+            id: 'bakery_oven',
+            name: 'Lò Nướng Bánh Mì',
+            icon: '🥐',
+            inputId: 'wheat',
+            inputQty: 3,
+            outputId: 'bread',
+            outputIcon: '🥖',
+            outputName: 'Bánh Mì',
+            cycleTime: 14,
+            exp: 20,
+            costCoins: 350
+        },
+        {
+            id: 'pastry_shop',
+            name: 'Xưởng Bánh Kem Dâu',
+            icon: '🎂',
+            inputId: 'strawberry',
+            inputQty: 2,
+            outputId: 'cake',
+            outputIcon: '🍰',
+            outputName: 'Bánh Kem Dâu',
+            cycleTime: 24,
+            exp: 45,
+            costCoins: 600
+        }
+    ];
+
+    const WEATHERS = [
+        { id: 'sunny', name: 'Nắng Đẹp', icon: 'fa-sun text-yellow-300', speedMult: 1.0, badge: 'Tốc độ: 100%' },
+        { id: 'rain', name: 'Mưa Rào (Tự tưới +50%)', icon: 'fa-cloud-showers-heavy text-sky-300', speedMult: 1.5, badge: 'Mưa: Tốc độ x1.5' },
+        { id: 'golden', name: 'Nắng Hoàng Kim (x2)', icon: 'fa-wand-magic-sparkles text-amber-300', speedMult: 2.0, badge: 'Hoàng Kim: Tốc độ x2' }
+    ];
+
+    // Default Player Save State
+    let state = {
+        coins: 250,
+        gems: 15,
+        level: 1,
+        exp: 0,
+        energy: 50,
+        maxEnergy: 50,
+        fertilizer: 3,
+        selectedTool: 'seed',
+        selectedSeed: 'wheat',
+        weatherIndex: 0,
+        plots: [],
+        inventory: {
+            wheat: 2,
+            corn: 0,
+            carrot: 0,
+            strawberry: 0,
+            pumpkin: 0,
+            golden_apple: 0,
+            egg: 0,
+            milk: 0,
+            bread: 0,
+            cake: 0
+        },
+        ranch: {
+            chicken_coop: { unlocked: true, busy: false, ready: false, progress: 0 },
+            cow_barn: { unlocked: false, busy: false, ready: false, progress: 0 },
+            bakery_oven: { unlocked: false, busy: false, ready: false, progress: 0 },
+            pastry_shop: { unlocked: false, busy: false, ready: false, progress: 0 }
+        },
+        orders: [],
+        quests: [
+            { id: 'q_harvest', title: 'Thu hoạch 8 vụ mùa bất kỳ', progress: 0, target: 8, rewardCoins: 120, rewardGems: 3, claimed: false },
+            { id: 'q_water', title: 'Tưới nước chăm cây 5 lần', progress: 0, target: 5, rewardCoins: 80, rewardGems: 2, claimed: false },
+            { id: 'q_order', title: 'Hoàn thành 2 Đơn Hàng Làng Mây', progress: 0, target: 2, rewardCoins: 200, rewardGems: 5, claimed: false },
+            { id: 'q_ranch', title: 'Thu hoạch sản phẩm Chăn Nuôi 3 lần', progress: 0, target: 3, rewardCoins: 150, rewardGems: 4, claimed: false }
+        ]
+    };
+
+    // Initialize 9 plots (6 unlocked, 3 expandable)
+    function initDefaultPlots() {
+        const unlockPrices = [0, 0, 0, 0, 0, 0, 150, 350, 750];
+        state.plots = unlockPrices.map((price, idx) => ({
+            id: idx,
+            unlocked: idx < 6,
+            unlockCost: price,
+            cropId: idx < 2 ? 'wheat' : null,
+            plantedAt: idx < 2 ? Date.now() - 6000 : 0,
+            progress: idx < 2 ? 6 : 0, // Pre-grown first 2 plots for instant gratification!
+            watered: false
+        }));
+    }
+
+    function saveGame() {
+        try {
+            localStorage.setItem('telefarm_tma_save_v1', JSON.stringify(state));
+        } catch (e) {}
+    }
+
+    function loadGame() {
+        try {
+            const raw = localStorage.getItem('telefarm_tma_save_v1');
+            if (raw) {
+                const parsed = JSON.parse(raw);
+                state = Object.assign({}, state, parsed);
+            } else {
+                initDefaultPlots();
+                generateOrders();
+            }
+        } catch (e) {
+            initDefaultPlots();
+            generateOrders();
+        }
+        if (!state.plots || state.plots.length !== 9) initDefaultPlots();
+        if (!state.orders || state.orders.length === 0) generateOrders();
+    }
+
+    /**************************************************************
+     * 3. CORE FARMING LOOP & SOIL PLOT LOGIC
+     **************************************************************/
+    function renderFarmGrid() {
+        const grid = document.getElementById('farm-grid');
+        grid.innerHTML = '';
+
+        state.plots.forEach((plot, idx) => {
+            const cell = document.createElement('div');
+
+            if (!plot.unlocked) {
+                cell.className = 'farm-plot soil-locked flex flex-col items-center justify-center p-1 text-center';
+                cell.innerHTML = `
+                    <span class="text-xl drop-shadow">🔒</span>
+                    <span class="text-[10px] font-black text-lime-100 bg-slate-900/70 px-1.5 py-0.5 rounded-full mt-1">Mở: ${plot.unlockCost} 🪙</span>
+                `;
+                cell.onclick = (e) => unlockPlot(idx, e);
+            } else {
+                const crop = plot.cropId ? CROPS[plot.cropId] : null;
+                const isReady = crop && plot.progress >= crop.growTime;
+                const pct = crop ? Math.min(100, Math.floor((plot.progress / crop.growTime) * 100)) : 0;
+
+                let soilClass = plot.watered ? 'soil-watered' : 'soil-empty';
+                if (isReady) soilClass += ' soil-ready';
+
+                cell.className = `farm-plot ${soilClass} flex flex-col items-center justify-center select-none`;
+
+                if (!crop) {
+                    cell.innerHTML = `
+                        <div class="w-4 h-4 rounded-full bg-amber-950/50 border border-amber-700/30"></div>
+                        <span class="text-[10px] font-extrabold text-amber-200/60 mt-1">Đất trống</span>
+                    `;
+                } else if (isReady) {
+                    cell.innerHTML = `
+                        <div class="absolute -top-2 right-1 bg-amber-400 text-slate-950 text-[9px] font-black px-1.5 py-0.2 rounded-full shadow border border-white animate-bounce">
+                            THU!
+                        </div>
+                        <div class="text-4xl animate-ready drop-shadow-md">${crop.icon}</div>
+                        <span class="text-[10px] font-black text-yellow-200 bg-slate-950/75 px-2 py-0.5 rounded-full mt-1">${crop.name}</span>
+                    `;
+                } else {
+                    // Growing stage visual (sprout vs budding)
+                    const stageEmoji = pct < 45 ? '🌱' : '🌿';
+                    const remSec = Math.max(1, Math.ceil(crop.growTime - plot.progress));
+                    cell.innerHTML = `
+                        ${plot.watered ? '<span class="absolute top-1 right-1.5 text-xs">💧</span>' : ''}
+                        <div class="text-3xl animate-crop">${stageEmoji}</div>
+                        <div class="w-4/5 h-2 bg-slate-950/80 rounded-full overflow-hidden mt-1.5 border border-white/15">
+                            <div class="h-full bg-gradient-to-r from-lime-400 to-emerald-400 transition-all duration-300" style="width: ${pct}%"></div>
+                        </div>
+                        <span class="text-[9px] font-extrabold text-amber-100 mt-0.5">${crop.icon} ${remSec}s</span>
+                    `;
+                }
+
+                cell.onclick = (e) => handlePlotClick(idx, e);
+            }
+
+            grid.appendChild(cell);
+        });
+    }
+
+    function unlockPlot(idx, event) {
+        const plot = state.plots[idx];
+        if (plot.unlocked) return;
+
+        if (state.coins < plot.unlockCost) {
+            playSFX('error');
+            triggerHaptic('error');
+            showToast('⚠️ Chưa đủ Vàng để mở rộng ô đất này!');
+            return;
+        }
+
+        state.coins -= plot.unlockCost;
+        plot.unlocked = true;
+        playSFX('coin');
+        triggerHaptic('success');
+        spawnFloatingText(event.clientX, event.clientY, '🔓 Mở Đất Mới!', '#4ade80');
+        updateHUD();
+        renderFarmGrid();
+        saveGame();
+    }
+
+    function handlePlotClick(idx, event) {
+        const plot = state.plots[idx];
+        if (!plot.unlocked) return;
+
+        const crop = plot.cropId ? CROPS[plot.cropId] : null;
+        const isReady = crop && plot.progress >= crop.growTime;
+
+        // 1. Always harvest immediately if crop is ready!
+        if (isReady) {
+            harvestPlot(idx, event);
+            return;
+        }
+
+        // 2. If plot is empty -> plant selected seed
+        if (!crop) {
+            const seed = CROPS[state.selectedSeed];
+            if (state.level < seed.unlockLevel) {
+                playSFX('error');
+                showToast(`🔒 Cần đạt Cấp ${seed.unlockLevel} để trồng ${seed.name}!`);
+                return;
+            }
+            if (state.coins < seed.seedCost) {
+                playSFX('error');
+                showToast('⚠️ Bạn không đủ Vàng mua hạt giống!');
+                return;
+            }
+            if (state.energy < 1) {
+                playSFX('error');
+                showToast('⚡ Hết năng lượng! Chờ vài giây để hồi phục nhé.');
+                return;
+            }
+
+            state.coins -= seed.seedCost;
+            state.energy -= 1;
+            plot.cropId = seed.id;
+            plot.progress = 0;
+            plot.watered = (WEATHERS[state.weatherIndex].id === 'rain');
+
+            playSFX('plant');
+            triggerHaptic('light');
+            spawnFloatingText(event.clientX, event.clientY, `-${seed.seedCost}🪙 ${seed.icon}`, '#fde047');
+            updateHUD();
+            renderFarmGrid();
+            saveGame();
+            return;
+        }
+
+        // 3. Plot has growing crop -> check active tool or boost
+        if (state.selectedTool === 'water') {
+            if (plot.watered) {
+                showToast('💧 Ô đất này đã ẩm ướt rồi!');
+                return;
+            }
+            plot.watered = true;
+            plot.progress = Math.min(crop.growTime, plot.progress + crop.growTime * 0.25);
+            incrementQuest('q_water', 1);
+            playSFX('water');
+            triggerHaptic('medium');
+            spawnFloatingText(event.clientX, event.clientY, '💧 Tưới mát +25%!', '#38bdf8');
+            renderFarmGrid();
+            saveGame();
+        } else if (state.selectedTool === 'fert') {
+            if (state.fertilizer <= 0) {
+                playSFX('error');
+                showToast('⚡ Đã hết Phân Bón! Hãy đổi thêm bằng Kim Cương.');
+                return;
+            }
+            state.fertilizer -= 1;
+            plot.progress = crop.growTime; // Instant mature!
+            playSFX('harvest');
+            triggerHaptic('success');
+            spawnFloatingText(event.clientX, event.clientY, '⚡ Chín Ngay Lập Tức!', '#a3e635');
+            updateHUD();
+            renderFarmGrid();
+            saveGame();
+        } else {
+            // Tap-to-grow micro interaction (Telegram Tap-to-Earn vibe!)
+            plot.progress = Math.min(crop.growTime, plot.progress + 1.2);
+            triggerHaptic('light');
+            spawnFloatingText(event.clientX, event.clientY, '✨ Chăm cây +1s', '#bbf7d0');
+            renderFarmGrid();
+        }
+    }
+
+    function harvestPlot(idx, event) {
+        const plot = state.plots[idx];
+        const crop = CROPS[plot.cropId];
+        if (!crop) return;
+
+        // Add to barn inventory
+        state.inventory[crop.id] = (state.inventory[crop.id] || 0) + 1;
+        addExp(crop.exp);
+        incrementQuest('q_harvest', 1);
+
+        // Reset plot
+        plot.cropId = null;
+        plot.progress = 0;
+        plot.watered = false;
+
+        playSFX('harvest');
+        triggerHaptic('success');
+
+        const x = event ? event.clientX : window.innerWidth / 2;
+        const y = event ? event.clientY : window.innerHeight / 2;
+        spawnFloatingText(x, y, `+1 ${crop.icon} +${crop.exp} EXP`, '#4ade80');
+
+        updateHUD();
+        renderFarmGrid();
+        renderOrdersAndInventory();
+        saveGame();
+    }
+
+    // Pet Dog Helper: One-tap harvest all ready crops & water dry crops
+    function triggerPetHelper() {
+        let harvestedCount = 0;
+        let wateredCount = 0;
+
+        state.plots.forEach((plot) => {
+            if (!plot.unlocked || !plot.cropId) return;
+            const crop = CROPS[plot.cropId];
+            if (plot.progress >= crop.growTime) {
+                state.inventory[crop.id] = (state.inventory[crop.id] || 0) + 1;
+                addExp(crop.exp);
+                incrementQuest('q_harvest', 1);
+                plot.cropId = null;
+                plot.progress = 0;
+                plot.watered = false;
+                harvestedCount++;
+            } else if (!plot.watered) {
+                plot.watered = true;
+                wateredCount++;
+            }
+        });
+
+        if (harvestedCount === 0 && wateredCount === 0) {
+            showToast('🐕 Corgi: "Chưa có cây nào chín hoặc khô đất chủ nhân ơi!"');
+            return;
+        }
+
+        playSFX('harvest');
+        triggerHaptic('success');
+        showToast(`🐕 Corgi đã thu hộ ${harvestedCount} cây & tưới ${wateredCount} ô đất!`);
+        updateHUD();
+        renderFarmGrid();
+        renderOrdersAndInventory();
+        saveGame();
+    }
+
+    /**************************************************************
+     * 4. TOOLS, SEEDS & RANCH PRODUCTION
+     **************************************************************/
+    function selectTool(toolName) {
+        state.selectedTool = toolName;
+        const tools = ['seed', 'water', 'fert'];
+        tools.forEach(t => {
+            const btn = document.getElementById(`tool-${t}`);
+            if (t === toolName) {
+                btn.className = 'flex-1 py-1.5 px-2 rounded-xl font-extrabold text-xs flex items-center justify-center gap-1.5 bg-amber-400 text-slate-950 shadow';
+            } else {
+                btn.className = 'flex-1 py-1.5 px-2 rounded-xl font-extrabold text-xs flex items-center justify-center gap-1.5 bg-amber-900/80 text-amber-200 hover:bg-amber-800';
+            }
+        });
+
+        const hint = document.getElementById('farm-hint-text');
+        if (toolName === 'seed') hint.textContent = 'Chạm ô đất trống để gieo hạt hoặc chạm cây đang lớn để thúc đẩy!';
+        if (toolName === 'water') hint.textContent = '💧 Chạm vào cây đang trồng để tưới nước (Tăng 25% tiến độ & x1.5 tốc độ)!';
+        if (toolName === 'fert') hint.textContent = '⚡ Chạm vào cây đang trồng để bón phân (Chín ngay lập tức)!';
+    }
+
+    function renderSeedSelector() {
+        const container = document.getElementById('seed-selector-bar');
+        container.innerHTML = '';
+
+        Object.values(CROPS).forEach(crop => {
+            const locked = state.level < crop.unlockLevel;
+            const isSelected = state.selectedSeed === crop.id;
+
+            const btn = document.createElement('button');
+            btn.className = `shrink-0 px-2.5 py-1.5 rounded-xl border-2 flex items-center gap-2 transition ${
+                locked
+                    ? 'bg-slate-900/60 border-slate-700 opacity-60'
+                    : isSelected
+                    ? 'bg-amber-100 border-amber-400 text-slate-900 scale-105 shadow-md'
+                    : 'bg-amber-900/50 border-amber-700/60 text-amber-100 hover:bg-amber-800/60'
+            }`;
+
+            btn.innerHTML = `
+                <span class="text-xl">${locked ? '🔒' : crop.icon}</span>
+                <div class="text-left leading-tight">
+                    <div class="text-[11px] font-black">${crop.name}</div>
+                    <div class="text-[10px] font-bold ${isSelected ? 'text-amber-800' : 'text-amber-300'}">
+                        ${locked ? `Cấp ${crop.unlockLevel}` : `${crop.seedCost}🪙 • ${crop.growTime}s`}
+                    </div>
+                </div>
+            `;
+
+            btn.onclick = () => {
+                if (locked) {
+                    playSFX('error');
+                    showToast(`🔒 Hãy lên Cấp ${crop.unlockLevel} để mở khóa hạt giống ${crop.name}!`);
+                    return;
+                }
+                state.selectedSeed = crop.id;
+                selectTool('seed');
+                renderSeedSelector();
+            };
+
+            container.appendChild(btn);
+        });
+    }
+
+    function renderRanch() {
+        const list = document.getElementById('ranch-list');
+        list.innerHTML = '';
+
+        RANCH_UNITS.forEach(unit => {
+            const rState = state.ranch[unit.id];
+            const inputCrop = CROPS[unit.inputId];
+            const haveInput = state.inventory[unit.inputId] || 0;
+            const pct = rState.busy ? Math.min(100, Math.floor((rState.progress / unit.cycleTime) * 100)) : 0;
+
+            const card = document.createElement('div');
+            card.className = 'bg-white/95 rounded-2xl p-3 border-2 border-white shadow flex items-center justify-between gap-2';
+
+            if (!rState.unlocked) {
+                card.innerHTML = `
+                    <div class="flex items-center gap-3">
+                        <div class="w-12 h-12 rounded-2xl bg-slate-200 flex items-center justify-center text-2xl grayscale">${unit.icon}</div>
+                        <div>
+                            <h4 class="font-display font-bold text-sm text-slate-800">${unit.name}</h4>
+                            <p class="text-xs text-slate-500">Sản xuất: ${unit.outputIcon} ${unit.outputName}</p>
+                        </div>
+                    </div>
+                    <button onclick="unlockRanchUnit('${unit.id}')" class="btn-3d-amber text-slate-950 font-black text-xs px-3 py-2 rounded-xl shrink-0">
+                        Mở: ${unit.costCoins} 🪙
+                    </button>
+                `;
+            } else {
+                let actionBtn = '';
+                if (rState.ready) {
+                    actionBtn = `
+                        <button onclick="collectRanch('${unit.id}')" class="btn-3d-green text-white font-black text-xs px-3 py-2 rounded-xl shrink-0 animate-bounce">
+                            Nhận ${unit.outputIcon}
+                        </button>
+                    `;
+                } else if (rState.busy) {
+                    const rem = Math.max(1, Math.ceil(unit.cycleTime - rState.progress));
+                    actionBtn = `
+                        <div class="w-28 text-right">
+                            <div class="text-[11px] font-black text-emerald-700">Đang làm... ${rem}s</div>
+                            <div class="w-full h-2.5 bg-slate-200 rounded-full overflow-hidden mt-1">
+                                <div class="h-full bg-emerald-500 transition-all duration-300" style="width:${pct}%"></div>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    actionBtn = `
+                        <button onclick="startRanch('${unit.id}')" class="btn-3d-blue text-white font-black text-xs px-3 py-2 rounded-xl shrink-0">
+                            Chế biến (${unit.inputQty} ${inputCrop.icon})
+                        </button>
+                    `;
+                }
+
+                card.innerHTML = `
+                    <div class="flex items-center gap-3">
+                        <div class="w-12 h-12 rounded-2xl bg-amber-100 border-2 border-amber-300 flex items-center justify-center text-3xl">${unit.icon}</div>
+                        <div>
+                            <h4 class="font-display font-bold text-sm text-slate-800">${unit.name}</h4>
+                            <p class="text-[11px] text-slate-600 font-semibold">
+                                Cần: <span class="${haveInput >= unit.inputQty ? 'text-emerald-600 font-black' : 'text-rose-500 font-bold'}">${haveInput}/${unit.inputQty} ${inputCrop.icon}</span>
+                                ➔ Tạo ra <strong>${unit.outputIcon} ${unit.outputName}</strong>
+                            </p>
+                        </div>
+                    </div>
+                    ${actionBtn}
+                `;
+            }
+
+            list.appendChild(card);
+        });
+    }
+
+    function unlockRanchUnit(unitId) {
+        const unit = RANCH_UNITS.find(u => u.id === unitId);
+        if (!unit) return;
+        if (state.coins < unit.costCoins) {
+            playSFX('error');
+            showToast('⚠️ Bạn chưa đủ Vàng để xây dựng công trình này!');
+            return;
+        }
+        state.coins -= unit.costCoins;
+        state.ranch[unitId].unlocked = true;
+        playSFX('coin');
+        triggerHaptic('success');
+        showToast(`🎉 Đã khai trương ${unit.name}!`);
+        updateHUD();
+        renderRanch();
+        saveGame();
+    }
+
+    function startRanch(unitId) {
+        const unit = RANCH_UNITS.find(u => u.id === unitId);
+        const rState = state.ranch[unitId];
+        if (!unit || !rState.unlocked || rState.busy) return;
+
+        const have = state.inventory[unit.inputId] || 0;
+        if (have < unit.inputQty) {
+            playSFX('error');
+            showToast(`⚠️ Kho thiếu nguyên liệu! Cần ${unit.inputQty} ${CROPS[unit.inputId].name}.`);
+            return;
+        }
+
+        state.inventory[unit.inputId] -= unit.inputQty;
+        rState.busy = true;
+        rState.ready = false;
+        rState.progress = 0;
+
+        playSFX('plant');
+        triggerHaptic('light');
+        renderRanch();
+        renderOrdersAndInventory();
+        saveGame();
+    }
+
+    function collectRanch(unitId) {
+        const unit = RANCH_UNITS.find(u => u.id === unitId);
+        const rState = state.ranch[unitId];
+        if (!unit || !rState.ready) return;
+
+        state.inventory[unit.outputId] = (state.inventory[unit.outputId] || 0) + 1;
+        rState.busy = false;
+        rState.ready = false;
+        rState.progress = 0;
+
+        addExp(unit.exp);
+        incrementQuest('q_ranch', 1);
+        playSFX('harvest');
+        triggerHaptic('success');
+        showToast(`🎉 Thu hoạch +1 ${unit.outputIcon} ${unit.outputName}!`);
+
+        updateHUD();
+        renderRanch();
+        renderOrdersAndInventory();
+        saveGame();
+    }
+
+    /**************************************************************
+     * 5. NPC ORDERS, MARKET & VIRAL QUESTS
+     **************************************************************/
+    const NPC_NAMES = ['Bà Tư Tạp Hóa', 'Đầu Bếp Pháp', 'Thị Trưởng Pavel', 'Cô Bé Quàng Khăn', 'Thương Gia TON'];
+    const NPC_AVATARS = ['👵', '👨‍🍳', '🧔‍♂️', '👧', '🤴'];
+
+    function generateOrders() {
+        state.orders = [];
+        for (let i = 0; i < 3; i++) {
+            state.orders.push(createSingleOrder());
+        }
+    }
+
+    function createSingleOrder() {
+        const npcIdx = Math.floor(Math.random() * NPC_NAMES.length);
+        const availableCrops = Object.values(CROPS).filter(c => c.unlockLevel <= Math.max(1, state.level));
+        const pickCrop = availableCrops[Math.floor(Math.random() * availableCrops.length)];
+        const qty = Math.floor(Math.random() * 3) + 2; // 2 to 4 items
+
+        const baseValue = pickCrop.sellPrice * qty;
+        const rewardCoins = Math.round(baseValue * 1.45);
+        const rewardGems = Math.random() < 0.65 ? 2 : 1;
+
+        return {
+            id: 'ord_' + Math.random().toString(36).substring(2, 8),
+            npcName: NPC_NAMES[npcIdx],
+            npcAvatar: NPC_AVATARS[npcIdx],
+            itemId: pickCrop.id,
+            itemName: pickCrop.name,
+            itemIcon: pickCrop.icon,
+            qty: qty,
+            rewardCoins: rewardCoins,
+            rewardGems: rewardGems,
+            rewardExp: qty * 8
+        };
+    }
+
+    function renderOrdersAndInventory() {
+        const orderBox = document.getElementById('orders-container');
+        orderBox.innerHTML = '';
+
+        let anyOrderCompletable = false;
+
+        state.orders.forEach((ord, idx) => {
+            const have = state.inventory[ord.itemId] || 0;
+            const canFulfill = have >= ord.qty;
+            if (canFulfill) anyOrderCompletable = true;
+
+            const div = document.createElement('div');
+            div.className = 'bg-white rounded-xl p-2.5 border border-amber-200 shadow-sm flex items-center justify-between gap-2';
+            div.innerHTML = `
+                <div class="flex items-center gap-2.5">
+                    <div class="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center text-2xl">${ord.npcAvatar}</div>
+                    <div>
+                        <div class="text-xs font-extrabold text-slate-800">${ord.npcName}</div>
+                        <div class="text-[11px] font-bold text-slate-600">
+                            Cần: <span class="${canFulfill ? 'text-emerald-600 font-black' : 'text-rose-500'}">${have}/${ord.qty} ${ord.itemIcon} ${ord.itemName}</span>
+                        </div>
+                        <div class="text-[10px] font-extrabold text-amber-600 mt-0.5">
+                            Thưởng: +${ord.rewardCoins} 🪙  +${ord.rewardGems} 💎
+                        </div>
+                    </div>
+                </div>
+                <button onclick="fulfillOrder(${idx})" class="${canFulfill ? 'btn-3d-green text-white' : 'bg-slate-200 text-slate-400'} font-black text-xs px-3 py-2 rounded-xl shrink-0">
+                    Giao Hàng
+                </button>
+            `;
+            orderBox.appendChild(div);
+        });
+
+        const orderDot = document.getElementById('order-ready-dot');
+        if (orderDot) orderDot.classList.toggle('hidden', !anyOrderCompletable);
+
+        // Render Barn Inventory
+        const invGrid = document.getElementById('inventory-grid');
+        invGrid.innerHTML = '';
+
+        const allItems = [...Object.values(CROPS), ...Object.values(PRODUCTS)];
+        let hasAnyItem = false;
+
+        allItems.forEach(item => {
+            const count = state.inventory[item.id] || 0;
+            if (count <= 0) return;
+            hasAnyItem = true;
+
+            const card = document.createElement('div');
+            card.className = 'bg-slate-50 border border-slate-200 rounded-xl p-2 flex flex-col items-center text-center';
+            card.innerHTML = `
+                <div class="text-2xl">${item.icon}</div>
+                <div class="text-[11px] font-extrabold text-slate-800 mt-0.5 truncate w-full">${item.name}</div>
+                <div class="text-[10px] font-black text-emerald-700">SL: ${count}</div>
+                <button onclick="sellSingleItem('${item.id}')" class="mt-1 w-full bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-[10px] py-1 rounded-lg">
+                    Bán +${item.sellPrice}🪙
+                </button>
+            `;
+            invGrid.appendChild(card);
+        });
+
+        if (!hasAnyItem) {
+            invGrid.innerHTML = `
+                <div class="col-span-3 py-6 text-center text-xs text-slate-400 font-bold">
+                    Kho đang trống! Hãy ra Nông Trại thu hoạch nông sản nhé.
+                </div>
+            `;
+        }
+    }
+
+    function fulfillOrder(orderIdx) {
+        const ord = state.orders[orderIdx];
+        if (!ord) return;
+        const have = state.inventory[ord.itemId] || 0;
+        if (have < ord.qty) {
+            playSFX('error');
+            showToast(`⚠️ Bạn còn thiếu ${ord.qty - have} ${ord.itemName} để giao đơn này!`);
+            return;
+        }
+
+        state.inventory[ord.itemId] -= ord.qty;
+        state.coins += ord.rewardCoins;
+        state.gems += ord.rewardGems;
+        addExp(ord.rewardExp);
+        incrementQuest('q_order', 1);
+
+        // Replace with a fresh order
+        state.orders[orderIdx] = createSingleOrder();
+
+        playSFX('coin');
+        triggerHaptic('success');
+        showToast(`🚚 Giao hàng thành công! +${ord.rewardCoins} 🪙 & +${ord.rewardGems} 💎`);
+
+        updateHUD();
+        renderOrdersAndInventory();
+        renderRanch();
+        saveGame();
+    }
+
+    function sellSingleItem(itemId) {
+        const count = state.inventory[itemId] || 0;
+        if (count <= 0) return;
+        const itemObj = CROPS[itemId] || PRODUCTS[itemId];
+        if (!itemObj) return;
+
+        state.inventory[itemId] -= 1;
+        state.coins += itemObj.sellPrice;
+        playSFX('coin');
+        triggerHaptic('light');
+        updateHUD();
+        renderOrdersAndInventory();
+        renderRanch();
+        saveGame();
+    }
+
+    function sellAllBarn() {
+        let totalEarned = 0;
+        const allItems = [...Object.values(CROPS), ...Object.values(PRODUCTS)];
+        allItems.forEach(item => {
+            const count = state.inventory[item.id] || 0;
+            if (count > 0) {
+                totalEarned += count * item.sellPrice;
+                state.inventory[item.id] = 0;
+            }
+        });
+
+        if (totalEarned === 0) {
+            playSFX('error');
+            showToast('📦 Kho nông sản đang trống!');
+            return;
+        }
+
+        state.coins += totalEarned;
+        playSFX('coin');
+        triggerHaptic('success');
+        showToast(`💰 Đã bán toàn bộ nông sản thu về +${totalEarned} 🪙!`);
+        updateHUD();
+        renderOrdersAndInventory();
+        renderRanch();
+        saveGame();
+    }
+
+    /**************************************************************
+     * 6. QUESTS & TELEGRAM VIRAL SHARE
+     **************************************************************/
+    function incrementQuest(questId, amount = 1) {
+        const q = state.quests.find(x => x.id === questId);
+        if (!q || q.claimed) return;
+        q.progress = Math.min(q.target, q.progress + amount);
+        renderQuests();
+    }
+
+    function renderQuests() {
+        const list = document.getElementById('quests-list');
+        if (!list) return;
+        list.innerHTML = '';
+
+        let anyClaimable = false;
+
+        state.quests.forEach(q => {
+            const isDone = q.progress >= q.target;
+            if (isDone && !q.claimed) anyClaimable = true;
+
+            const item = document.createElement('div');
+            item.className = 'bg-slate-50 border border-slate-200 rounded-xl p-2.5 flex items-center justify-between gap-2';
+            item.innerHTML = `
+                <div>
+                    <div class="text-xs font-extrabold text-slate-800">${q.title}</div>
+                    <div class="text-[10px] font-bold text-amber-600 mt-0.5">
+                        Thưởng: +${q.rewardCoins} 🪙 & +${q.rewardGems} 💎 • Tiến độ: ${q.progress}/${q.target}
+                    </div>
+                </div>
+                ${
+                    q.claimed
+                        ? '<span class="text-[11px] font-black text-emerald-600 px-2">Đã Nhận ✓</span>'
+                        : isDone
+                        ? `<button onclick="claimQuest('${q.id}')" class="btn-3d-amber text-slate-950 font-black text-xs px-3 py-1.5 rounded-xl animate-bounce">Nhận Thưởng</button>`
+                        : `<span class="text-xs font-black text-slate-400 bg-slate-200 px-2.5 py-1 rounded-lg">${q.progress}/${q.target}</span>`
+                }
+            `;
+            list.appendChild(item);
+        });
+
+        const dot = document.getElementById('quest-ready-dot');
+        if (dot) dot.classList.toggle('hidden', !anyClaimable);
+    }
+
+    function claimQuest(questId) {
+        const q = state.quests.find(x => x.id === questId);
+        if (!q || q.claimed || q.progress < q.target) return;
+
+        q.claimed = true;
+        state.coins += q.rewardCoins;
+        state.gems += q.rewardGems;
+        addExp(20);
+
+        playSFX('coin');
+        triggerHaptic('success');
+        showToast(`🎁 Nhận thưởng nhiệm vụ: +${q.rewardCoins} 🪙 & +${q.rewardGems} 💎!`);
+        updateHUD();
+        renderQuests();
+        saveGame();
+    }
+
+    function shareTelegramInvite() {
+        const shareText = encodeURIComponent('🌾 Cùng mình xây dựng Nông Trại Trên Mây trong Telegram và nhận quà khởi nghiệp +500 Vàng nhé!');
+        const shareUrl = encodeURIComponent('https://t.me/TeleFarmCloudBot');
+        const fullLink = `https://t.me/share/url?url=${shareUrl}&text=${shareText}`;
+
+        if (tg && tg.openTelegramLink) {
+            tg.openTelegramLink(fullLink);
+        } else {
+            window.open(fullLink, '_blank');
+        }
+
+        // Reward player for viral action
+        state.coins += 500;
+        state.gems += 10;
+        playSFX('coin');
+        triggerHaptic('success');
+        showToast('🎉 Thưởng chia sẻ Telegram: +500 🪙 & +10 💎!');
+        updateHUD();
+        saveGame();
+    }
+
+    function copyInviteLink() {
+        const dummyInput = document.createElement('textarea');
+        dummyInput.value = 'https://t.me/TeleFarmCloudBot?start=ref_publisher';
+        document.body.appendChild(dummyInput);
+        dummyInput.select();
+        document.execCommand('copy');
+        document.body.removeChild(dummyInput);
+
+        triggerHaptic('light');
+        showToast('📋 Đã sao chép link mời bạn bè vào bộ nhớ tạm!');
+    }
+
+    /**************************************************************
+     * 7. WEATHER SYSTEM, HUD & REAL-TIME TICK LOOP
+     **************************************************************/
+    function cycleWeather() {
+        state.weatherIndex = (state.weatherIndex + 1) % WEATHERS.length;
+        applyWeatherUI();
+        triggerHaptic('light');
+        showToast(`🌤️ Thời tiết chuyển sang: ${WEATHERS[state.weatherIndex].name}`);
+    }
+
+    function applyWeatherUI() {
+        const w = WEATHERS[state.weatherIndex];
+        const frame = document.getElementById('app-frame');
+        const rainLayer = document.getElementById('rain-layer');
+        const skyOrb = document.getElementById('sky-orb');
+
+        frame.classList.remove('weather-rain', 'weather-golden');
+        rainLayer.classList.add('hidden');
+
+        if (w.id === 'rain') {
+            frame.classList.add('weather-rain');
+            rainLayer.classList.remove('hidden');
+            skyOrb.innerHTML = '<i class="fa-solid fa-cloud-rain text-sky-200"></i>';
+            skyOrb.className = 'absolute top-3 right-6 w-12 h-12 rounded-full bg-slate-600 shadow-[0_0_25px_#38bdf8] flex items-center justify-center text-2xl transition-all duration-700';
+            // Auto water all unlocked plots when raining
+            state.plots.forEach(p => { if (p.unlocked && p.cropId) p.watered = true; });
+        } else if (w.id === 'golden') {
+            frame.classList.add('weather-golden');
+            skyOrb.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles text-amber-700"></i>';
+            skyOrb.className = 'absolute top-3 right-6 w-12 h-12 rounded-full bg-amber-300 shadow-[0_0_30px_#f59e0b] flex items-center justify-center text-2xl transition-all duration-700';
+        } else {
+            skyOrb.innerHTML = '<i class="fa-solid fa-sun animate-spin" style="animation-duration: 18s;"></i>';
+            skyOrb.className = 'absolute top-3 right-6 w-12 h-12 rounded-full bg-yellow-300 shadow-[0_0_25px_#fde047] flex items-center justify-center text-amber-600 text-2xl transition-all duration-700';
+        }
+
+        document.getElementById('weather-label').textContent = w.name.split(' ')[0] + ' ' + (w.name.split(' ')[1] || '');
+        document.getElementById('weather-buff-badge').textContent = w.badge;
+        renderFarmGrid();
+    }
+
+    function addExp(amount) {
+        state.exp += amount;
+        const needed = state.level * 50;
+        if (state.exp >= needed) {
+            state.exp -= needed;
+            state.level += 1;
+            state.coins += state.level * 100;
+            state.gems += 5;
+            playSFX('coin');
+            triggerHaptic('success');
+            showToast(`🎊 THĂNG CẤP ${state.level}! Thưởng +${state.level * 100} 🪙 & Mở khóa hạt giống mới!`);
+            renderSeedSelector();
+        }
+        updateHUD();
+    }
+
+    function updateHUD() {
+        document.getElementById('hud-coins').textContent = state.coins.toLocaleString('vi-VN');
+        document.getElementById('hud-gems').textContent = state.gems.toLocaleString('vi-VN');
+        document.getElementById('hud-level').textContent = `Lv.${state.level}`;
+        document.getElementById('hud-energy').textContent = `${state.energy}/${state.maxEnergy}`;
+        document.getElementById('fert-count').textContent = state.fertilizer;
+
+        const needed = state.level * 50;
+        const expPct = Math.min(100, Math.floor((state.exp / needed) * 100));
+        document.getElementById('hud-exp-bar').style.width = `${expPct}%`;
+
+        const modalGem = document.getElementById('modal-gem-balance');
+        if (modalGem) modalGem.textContent = `${state.gems} 💎`;
+    }
+
+    function switchTab(tabId) {
+        const tabs = ['farm', 'ranch', 'orders', 'quests'];
+        tabs.forEach(t => {
+            document.getElementById(`tab-${t}`).classList.toggle('hidden', t !== tabId);
+            const nav = document.getElementById(`nav-${t}`);
+            if (t === tabId) {
+                nav.className = 'nav-btn relative flex flex-col items-center justify-center py-1 rounded-xl bg-emerald-500/20 text-emerald-300 border border-emerald-400/30';
+            } else {
+                nav.className = 'nav-btn relative flex flex-col items-center justify-center py-1 rounded-xl text-slate-400 hover:text-white';
+            }
+        });
+        triggerHaptic('light');
+        if (tabId === 'ranch') renderRanch();
+        if (tabId === 'orders') renderOrdersAndInventory();
+        if (tabId === 'quests') renderQuests();
+    }
+
+    // Floating Text & Toast Helpers
+    function spawnFloatingText(x, y, text, color = '#ffffff') {
+        const el = document.createElement('div');
+        el.className = 'floating-text text-sm';
+        el.style.left = `${Math.max(20, Math.min(window.innerWidth - 100, x - 30))}px`;
+        el.style.top = `${Math.max(40, y - 20)}px`;
+        el.style.color = color;
+        el.textContent = text;
+        document.body.appendChild(el);
+        setTimeout(() => el.remove(), 1150);
+    }
+
+    function showToast(msg) {
+        const box = document.getElementById('toast-box');
+        const item = document.createElement('div');
+        item.className = 'bg-slate-900/95 text-white text-xs font-extrabold px-3.5 py-2 rounded-2xl shadow-lg border border-white/20 backdrop-blur animate-bounce';
+        item.textContent = msg;
+        box.appendChild(item);
+        setTimeout(() => {
+            item.style.opacity = '0';
+            item.style.transition = 'opacity 0.3s ease';
+            setTimeout(() => item.remove(), 300);
+        }, 2300);
+    }
+
+    // Modals & Publisher Sandbox
+    function openPublisherModal() {
+        document.getElementById('modal-publisher').classList.remove('hidden');
+    }
+    function closePublisherModal() {
+        document.getElementById('modal-publisher').classList.add('hidden');
+    }
+    function openAirdropModal() {
+        updateHUD();
+        document.getElementById('modal-airdrop').classList.remove('hidden');
+    }
+    function closeAirdropModal() {
+        document.getElementById('modal-airdrop').classList.add('hidden');
+    }
+    function buyFertilizerWithGems() {
+        if (state.gems < 5) {
+            playSFX('error');
+            showToast('⚠️ Bạn cần ít nhất 5 💎 để đổi gói Phân Bón!');
+            return;
+        }
+        state.gems -= 5;
+        state.fertilizer += 5;
+        playSFX('coin');
+        triggerHaptic('success');
+        showToast('⚡ Đã đổi thành công +5 Phân Bón Siêu Tốc!');
+        updateHUD();
+        saveGame();
+    }
+    function grantPublisherBoost() {
+        state.coins += 5000;
+        state.gems += 50;
+        state.level = Math.max(state.level, 5);
+        state.fertilizer += 10;
+        playSFX('coin');
+        triggerHaptic('success');
+        showToast('🚀 Đã kích hoạt gói Publisher Sandbox (+5,000 🪙, Lv.5)!');
+        updateHUD();
+        renderSeedSelector();
+        renderFarmGrid();
+        closePublisherModal();
+        saveGame();
+    }
+
+    // Main 1-Second Game Loop
+    let energyTickCounter = 0;
+    function startGameLoop() {
+        setInterval(() => {
+            let farmChanged = false;
+            let ranchChanged = false;
+
+            const weatherMult = WEATHERS[state.weatherIndex].speedMult;
+
+            // 1. Grow Crops
+            state.plots.forEach(plot => {
+                if (!plot.unlocked || !plot.cropId) return;
+                const crop = CROPS[plot.cropId];
+                if (plot.progress < crop.growTime) {
+                    const waterMult = plot.watered ? 1.5 : 1.0;
+                    plot.progress = Math.min(crop.growTime, plot.progress + 1 * weatherMult * waterMult);
+                    farmChanged = true;
+                }
+            });
+
+            // 2. Process Ranch & Factory Units
+            RANCH_UNITS.forEach(unit => {
+                const rState = state.ranch[unit.id];
+                if (rState && rState.unlocked && rState.busy && !rState.ready) {
+                    rState.progress += 1;
+                    if (rState.progress >= unit.cycleTime) {
+                        rState.progress = unit.cycleTime;
+                        rState.ready = true;
+                    }
+                    ranchChanged = true;
+                }
+            });
+
+            // 3. Regenerate Energy every 3 seconds
+            energyTickCounter++;
+            if (energyTickCounter >= 3) {
+                energyTickCounter = 0;
+                if (state.energy < state.maxEnergy) {
+                    state.energy += 1;
+                    updateHUD();
+                }
+            }
+
+            if (farmChanged && !document.getElementById('tab-farm').classList.contains('hidden')) {
+                renderFarmGrid();
+            }
+            if (ranchChanged && !document.getElementById('tab-ranch').classList.contains('hidden')) {
+                renderRanch();
+            }
+        }, 1000);
+    }
+
+    // Initialize Everything on Window Load
+    window.onload = function () {
+        initTelegramSDK();
+        loadGame();
+        updateHUD();
+        applyWeatherUI();
+        renderSeedSelector();
+        renderFarmGrid();
+        renderRanch();
+        renderOrdersAndInventory();
+        renderQuests();
+        startGameLoop();
+    };
+</script>
+</body>
+</html>
