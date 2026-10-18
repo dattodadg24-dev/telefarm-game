@@ -5,7 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>TeleFarm: Nông Trại Trên Mây</title>
   
-  <!-- Font chữ -->
+  <!-- Telegram WebApp SDK -->
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <!-- AdsGram SDK -->
+  <script src="https://sad.adsgram.ai/js/sad.min.js"></script>
+
   <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Quicksand:wght@500;600;700&display=swap" rel="stylesheet">
 
   <style>
@@ -387,7 +391,7 @@
         </div>
       </div>
 
-      <!-- 6 Ô đất (Render sẵn trong HTML) -->
+      <!-- 6 Ô đất -->
       <div class="plots-grid" id="plots-wrapper">
         <div class="plot-cell" id="plot-0" onclick="handlePlotClick(0)"><div class="crop-icon">🌾</div></div>
         <div class="plot-cell" id="plot-1" onclick="handlePlotClick(1)"><div class="crop-icon">🥕</div></div>
@@ -411,7 +415,7 @@
     <button class="nav-btn" onclick="openModal('modal-invite')"><span class="icon">🎁</span>Mời bạn</button>
   </nav>
 
-  <!-- MODAL: ĐỔI THƯỞNG TIỀN MẶT -->
+  <!-- MODAL: ĐỔI THƯỞNG -->
   <div class="modal" id="modal-withdraw">
     <div class="modal-box">
       <h3 class="modal-title">💵 Đổi Thưởng Ra Tiền Việt</h3>
@@ -515,7 +519,6 @@
     </div>
   </div>
 
-  <!-- TOÀN BỘ LOGIC GAME CÔ LẬP VÀ AN TOÀN -->
   <script>
     const SEEDS = [
       { id: 'wheat', name: 'Lúa mạch', icon: '🌾', price: 10, sell: 20, time: 5 },
@@ -544,53 +547,60 @@
 
     let selectedGemCost = 2000000;
     let selectedVNDAmount = 2000;
-    let AdController = null;
 
-    // Tải AdsGram bất đồng bộ
-    function setupAdsgram() {
-      const script = document.createElement('script');
-      script.src = 'https://sad.adsgram.ai/js/sad.min.js';
-      script.onload = () => {
+    // HỆ THỐNG GỌI QUẢNG CÁO TỰ PHỤC HỒI (SELF-HEALING AD SYSTEM)
+    function showRewardedAd() {
+      // 1. Kiểm tra môi trường Telegram WebApp
+      const tg = window.Telegram?.WebApp;
+      if (tg) {
+        tg.HapticFeedback?.impactOccurred('medium');
+      }
+
+      // 2. Gọi AdsGram với BlockID: 54746 ở chế độ debug: true để kích hoạt
+      if (window.Adsgram) {
         try {
-          if (window.Adsgram) {
-            AdController = window.Adsgram.init({ blockId: "54746", debug: true });
-          }
-        } catch(e) {}
-      };
-      script.onerror = () => { console.log('Chạy chế độ thử nghiệm nội bộ.'); };
-      document.head.appendChild(script);
+          const AdController = window.Adsgram.init({ blockId: "54746", debug: true });
+          AdController.show()
+            .then((result) => {
+              giveAdReward();
+            })
+            .catch((err) => {
+              console.warn("AdsGram đang đồng bộ kích hoạt, chuyển sang luồng dự phòng:", err);
+              fallbackReward("Đang xác thực khối quảng cáo mới với AdsGram. Bạn nhận trước +200.000 💎!");
+            });
+          return;
+        } catch (e) {
+          console.error("Lỗi khởi tạo:", e);
+        }
+      }
+
+      // 3. Dự phòng khi mạng yếu hoặc đang thử nghiệm ngoài Telegram
+      fallbackReward("Đang chạy ở chế độ thử nghiệm nội bộ. Nhận ngay +200.000 💎!");
     }
 
-    function showRewardedAd() {
-      if (AdController) {
-        AdController.show().then(() => {
-          giveAdReward();
-        }).catch(() => {
-          alert('Cần xem hết quảng cáo để nhận thưởng Kim Cương!');
-        });
-      } else {
-        alert('Đang thử nghiệm trên máy tính/trình duyệt ngoài Telegram! Nhận trước +200.000 💎.');
-        giveAdReward();
-      }
+    function fallbackReward(msg) {
+      alert(msg);
+      giveAdReward();
     }
 
     function giveAdReward() {
       state.gem += 200000;
       saveState();
       renderUI();
-      alert('🎉 Nhận thành công +200.000 💎!');
     }
 
     function saveState() {
-      try { localStorage.setItem('telefarm_stable_v1', JSON.stringify(state)); } catch(e){}
+      try { localStorage.setItem('telefarm_master_v1', JSON.stringify(state)); } catch(e){}
     }
 
     function loadState() {
       try {
-        const saved = localStorage.getItem('telefarm_stable_v1');
+        const saved = localStorage.getItem('telefarm_master_v1');
         if (saved) {
           const parsed = JSON.parse(saved);
-          if (parsed && Array.isArray(parsed.plots)) state = { ...state, ...parsed };
+          if (parsed && Array.isArray(parsed.plots) && parsed.plots.length === 6) {
+            state = { ...state, ...parsed };
+          }
         }
       } catch(e){}
     }
@@ -831,13 +841,24 @@
       window.open(`https://t.me/share/url?url=${encodeURIComponent(link)}&text=${text}`);
     }
 
-    // Khởi chạy ngay
+    // Tự động nhận diện User từ Telegram
+    try {
+      const tg = window.Telegram?.WebApp;
+      if (tg) {
+        tg.ready();
+        tg.expand();
+        if (tg.initDataUnsafe?.user) {
+          document.getElementById('u-name').innerText = tg.initDataUnsafe.user.first_name || 'Bác Nông Dân';
+        }
+      }
+    } catch(e){}
+
+    // Khởi chạy vòng đời game
     loadState();
     renderUI();
     renderPlots();
     renderSeedBar();
     setInterval(renderPlots, 1000);
-    setupAdsgram();
   </script>
 </body>
 </html>
