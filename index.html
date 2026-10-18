@@ -4,19 +4,20 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>TeleFarm: Nông Trại Trên Mây</title>
+  
   <!-- Telegram WebApp SDK -->
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <!-- AdsGram SDK -->
+  <script src="https://sad.adsgram.ai/js/sad.min.js"></script>
+
   <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Quicksand:wght@500;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
       --primary: #4cd137;
       --primary-dark: #44bd32;
       --accent: #fbc531;
-      --accent-dark: #e1b12c;
       --gold: #ffbe0b;
       --gem: #00a8ff;
-      --soil: #8b5a2b;
-      --soil-border: #5c3818;
       --sky: linear-gradient(180deg, #48dbfb 0%, #a0e7fd 60%, #dff9fb 100%);
     }
 
@@ -52,12 +53,7 @@
       z-index: 100;
     }
 
-    .user-box {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
+    .user-box { display: flex; align-items: center; gap: 10px; }
     .user-avatar {
       width: 44px;
       height: 44px;
@@ -70,27 +66,9 @@
       border: 3px solid #fff;
       box-shadow: 0 3px 8px rgba(0,0,0,0.12);
     }
-
-    .user-meta .name {
-      font-weight: 700;
-      font-size: 14px;
-      max-width: 110px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .user-meta .lv {
-      font-size: 11px;
-      color: #718093;
-      font-weight: 600;
-    }
-
-    .currencies {
-      display: flex;
-      gap: 8px;
-    }
-
+    .user-meta .name { font-weight: 700; font-size: 14px; max-width: 110px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .user-meta .lv { font-size: 11px; color: #718093; font-weight: 600; }
+    .currencies { display: flex; gap: 8px; }
     .pill {
       background: white;
       padding: 6px 10px;
@@ -102,7 +80,6 @@
       align-items: center;
       gap: 4px;
     }
-
     .pill.gold { color: #d48b00; }
     .pill.gem { color: #0984e3; }
 
@@ -118,18 +95,21 @@
     .action-btn {
       background: white;
       border: none;
-      padding: 7px 12px;
+      padding: 7px 11px;
       border-radius: 16px;
-      font-size: 12px;
+      font-size: 11px;
       font-weight: 700;
       cursor: pointer;
       box-shadow: 0 3px 6px rgba(0,0,0,0.06);
       display: flex;
       align-items: center;
-      gap: 5px;
+      gap: 4px;
       color: #333;
     }
-
+    .action-btn.ad-btn {
+      background: linear-gradient(135deg, #e67e22, #f39c12);
+      color: white;
+    }
     .action-btn.cashout {
       background: linear-gradient(135deg, #10ac84, #1dd1a1);
       color: white;
@@ -147,7 +127,6 @@
       width: 100%;
     }
 
-    /* Island decoration header */
     .farm-island {
       background: rgba(255, 255, 255, 0.7);
       border-radius: 24px;
@@ -165,14 +144,9 @@
       justify-content: space-between;
       align-items: center;
       width: 100%;
-      margin-bottom: 14px;
+      margin-bottom: 12px;
     }
-
-    .island-title {
-      font-family: 'Fredoka One', cursive;
-      font-size: 16px;
-      color: #2f3640;
-    }
+    .island-title { font-family: 'Fredoka One', cursive; font-size: 16px; color: #2f3640; }
 
     .corgi-box {
       background: #fff;
@@ -189,9 +163,7 @@
       justify-content: center;
     }
 
-    .corgi-box:active { transform: scale(0.98); }
-
-    /* Land Plots Grid */
+    /* Plots Grid */
     .plots-grid {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
@@ -211,30 +183,17 @@
       position: relative;
       cursor: pointer;
       box-shadow: 0 5px 0 #4a2810, inset 0 3px 8px rgba(0,0,0,0.3);
-      transition: transform 0.1s, box-shadow 0.2s;
+      transition: transform 0.1s;
       overflow: hidden;
     }
-
-    .plot-cell:active { transform: translateY(3px); box-shadow: 0 2px 0 #4a2810; }
+    .plot-cell:active { transform: translateY(3px); }
     .plot-cell.ripe {
       border-color: #2ed573;
       box-shadow: 0 5px 0 #4a2810, 0 0 12px rgba(46, 213, 115, 0.8);
     }
-
-    .plot-cell .crop-icon {
-      font-size: 36px;
-      filter: drop-shadow(0 4px 6px rgba(0,0,0,0.2));
-      transition: transform 0.2s;
-    }
-
-    .plot-cell.ripe .crop-icon {
-      animation: pulse 1s infinite alternate;
-    }
-
-    @keyframes pulse {
-      0% { transform: scale(1); }
-      100% { transform: scale(1.15); }
-    }
+    .plot-cell .crop-icon { font-size: 36px; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.2)); }
+    .plot-cell.ripe .crop-icon { animation: pulse 1s infinite alternate; }
+    @keyframes pulse { 0% { transform: scale(1); } 100% { transform: scale(1.15); } }
 
     .plot-timer {
       position: absolute;
@@ -242,8 +201,7 @@
       font-size: 10px;
       font-weight: 700;
       color: #fff;
-      text-shadow: 0 1px 3px black;
-      background: rgba(0,0,0,0.3);
+      background: rgba(0,0,0,0.4);
       padding: 1px 6px;
       border-radius: 8px;
     }
@@ -258,15 +216,9 @@
       border-radius: 4px;
       overflow: hidden;
     }
+    .progress-fill { height: 100%; width: 0%; background: #2ed573; transition: width 0.3s; }
 
-    .progress-fill {
-      height: 100%;
-      width: 0%;
-      background: #2ed573;
-      transition: width 0.3s;
-    }
-
-    /* Seed Selector Bar */
+    /* Seed Bar */
     .seed-bar {
       margin-top: 16px;
       display: flex;
@@ -275,28 +227,10 @@
       overflow-x: auto;
       padding: 4px 2px;
     }
-
     .seed-item {
       background: white;
       border: 2px solid #ddd;
       border-radius: 14px;
       padding: 6px 10px;
       display: flex;
-      align-items: center;
-      gap: 6px;
-      cursor: pointer;
-      font-size: 12px;
-      font-weight: 700;
-      white-space: nowrap;
-    }
-
-    .seed-item.selected {
-      border-color: #4cd137;
-      background: #eafaf1;
-    }
-
-    /* Bottom Navigation Bar */
-    .bottom-nav {
-      position: fixed;
-      bottom: 0;
-      left: 0;
+      align
