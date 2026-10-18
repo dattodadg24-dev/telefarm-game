@@ -5,8 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>TeleFarm: Nông Trại Trên Mây</title>
   
-  <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <script src="https://sad.adsgram.ai/js/sad.min.js"></script>
+  <!-- Font chữ -->
   <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Quicksand:wght@500;600;700&display=swap" rel="stylesheet">
 
   <style>
@@ -105,7 +104,7 @@
     .action-btn.ad-btn { background: linear-gradient(135deg, #e67e22, #f39c12); color: white; }
     .action-btn.cashout { background: linear-gradient(135deg, #10ac84, #1dd1a1); color: white; }
 
-    /* Farm Island */
+    /* Farm Island Area */
     .farm-container {
       flex: 1;
       padding: 10px 14px 90px 14px;
@@ -359,7 +358,7 @@
       </div>
     </div>
     <div class="currencies">
-      <div class="pill gold">🪙 <span id="val-gold">200</span></div>
+      <div class="pill gold">🪙 <span id="val-gold">500</span></div>
       <div class="pill gem">💎 <span id="val-gem">500,000</span></div>
     </div>
   </header>
@@ -388,10 +387,17 @@
         </div>
       </div>
 
-      <!-- 6 Ô đất -->
-      <div class="plots-grid" id="plots-wrapper"></div>
+      <!-- 6 Ô đất (Render sẵn trong HTML) -->
+      <div class="plots-grid" id="plots-wrapper">
+        <div class="plot-cell" id="plot-0" onclick="handlePlotClick(0)"><div class="crop-icon">🌾</div></div>
+        <div class="plot-cell" id="plot-1" onclick="handlePlotClick(1)"><div class="crop-icon">🥕</div></div>
+        <div class="plot-cell" id="plot-2" onclick="handlePlotClick(2)"><div class="crop-icon" style="opacity:0.25;">🕳️</div></div>
+        <div class="plot-cell" id="plot-3" onclick="handlePlotClick(3)"><div class="crop-icon" style="opacity:0.25;">🕳️</div></div>
+        <div class="plot-cell" id="plot-4" onclick="handlePlotClick(4)"><div class="crop-icon" style="opacity:0.25;">🕳️</div></div>
+        <div class="plot-cell" id="plot-5" onclick="handlePlotClick(5)"><div class="crop-icon" style="opacity:0.25;">🕳️</div></div>
+      </div>
 
-      <!-- Khay chọn hạt -->
+      <!-- Khay chọn hạt giống -->
       <div class="seed-bar" id="seed-bar"></div>
     </div>
   </main>
@@ -411,7 +417,7 @@
       <h3 class="modal-title">💵 Đổi Thưởng Ra Tiền Việt</h3>
       
       <div class="rate-alert">
-        💎 Số dư hiện có: <b id="withdraw-gem-display">0</b> Kim Cương<br>
+        💎 Số dư hiện có: <b id="withdraw-gem-display">500,000</b> Kim Cương<br>
         <span style="font-size:11px; color:#555;">Tỷ lệ: <b>2.000.000 💎 = 2.000 VNĐ</b> (1.000 💎 = 1đ)</span>
       </div>
 
@@ -451,6 +457,7 @@
   <div class="modal" id="modal-daily">
     <div class="modal-box">
       <h3 class="modal-title">📅 Điểm Danh 7 Ngày</h3>
+      <p style="font-size: 13px; text-align: center; color: #666;">Điểm danh mỗi ngày tích lũy Kim Cương đổi tiền mặt!</p>
       <div id="daily-list" style="display: flex; flex-direction: column; gap: 8px;"></div>
       <button class="btn-close" onclick="closeModal('modal-daily')">Đóng</button>
     </div>
@@ -502,20 +509,14 @@
     <div class="modal-box">
       <h3 class="modal-title">🎁 Mời Bạn Bè</h3>
       <p style="font-size: 13px; text-align: center; color: #555;">Mỗi người bạn tham gia nhận ngay <b>+200.000 💎 và 2.000 🪙</b>!</p>
-      <div style="background: #f8f9fa; padding: 12px; border-radius: 12px; word-break: break-all; font-size: 12px;" id="ref-link-display"></div>
+      <div style="background: #f8f9fa; padding: 12px; border-radius: 12px; word-break: break-all; font-size: 12px;" id="ref-link-display">https://t.me/telefarm_game_bot?startapp=ref_player</div>
       <button class="btn-green" style="padding: 10px; width: 100%; margin-top: 8px;" onclick="shareInvite()">Gửi Lời Mời Ngay</button>
       <button class="btn-close" onclick="closeModal('modal-invite')">Đóng</button>
     </div>
   </div>
 
+  <!-- TOÀN BỘ LOGIC GAME CÔ LẬP VÀ AN TOÀN -->
   <script>
-    // Xóa sạch LocalStorage cũ để tránh xung đột dữ liệu làm trắng màn hình
-    try {
-      localStorage.removeItem('telefarm_save');
-      localStorage.removeItem('telefarm_save_prod');
-    } catch(e) {}
-
-    // Dữ liệu hạt giống
     const SEEDS = [
       { id: 'wheat', name: 'Lúa mạch', icon: '🌾', price: 10, sell: 20, time: 5 },
       { id: 'carrot', name: 'Cà rốt', icon: '🥕', price: 25, sell: 50, time: 10 },
@@ -543,53 +544,55 @@
 
     let selectedGemCost = 2000000;
     let selectedVNDAmount = 2000;
-
-    // Khởi tạo AdsGram bọc an toàn
     let AdController = null;
-    try {
-      if (window.Adsgram) {
-        AdController = window.Adsgram.init({ blockId: "54746", debug: false });
-      }
-    } catch(err) {
-      console.warn("Adsgram chưa sẵn sàng:", err);
+
+    // Tải AdsGram bất đồng bộ
+    function setupAdsgram() {
+      const script = document.createElement('script');
+      script.src = 'https://sad.adsgram.ai/js/sad.min.js';
+      script.onload = () => {
+        try {
+          if (window.Adsgram) {
+            AdController = window.Adsgram.init({ blockId: "54746", debug: false });
+          }
+        } catch(e) {}
+      };
+      script.onerror = () => { console.log('Chạy chế độ thử nghiệm nội bộ.'); };
+      document.head.appendChild(script);
     }
 
     function showRewardedAd() {
-      if (!AdController) {
-        alert("Đang chạy trên trình duyệt web thử nghiệm! Cộng trước +200.000 💎.");
+      if (AdController) {
+        AdController.show().then(() => {
+          giveAdReward();
+        }).catch(() => {
+          alert('Cần xem hết quảng cáo để nhận thưởng Kim Cương!');
+        });
+      } else {
+        alert('Đang thử nghiệm trên máy tính/trình duyệt ngoài Telegram! Nhận trước +200.000 💎.');
         giveAdReward();
-        return;
       }
-      AdController.show().then(() => {
-        giveAdReward();
-      }).catch(() => {
-        alert("Bạn cần xem hết video để nhận thưởng Kim Cương!");
-      });
     }
 
     function giveAdReward() {
       state.gem += 200000;
       saveState();
       renderUI();
-      alert("🎉 Nhận thành công +200.000 💎 từ quảng cáo!");
+      alert('🎉 Nhận thành công +200.000 💎!');
     }
 
     function saveState() {
-      try {
-        localStorage.setItem('telefarm_safe_v1', JSON.stringify(state));
-      } catch(e) {}
+      try { localStorage.setItem('telefarm_stable_v1', JSON.stringify(state)); } catch(e){}
     }
 
     function loadState() {
       try {
-        const saved = localStorage.getItem('telefarm_safe_v1');
+        const saved = localStorage.getItem('telefarm_stable_v1');
         if (saved) {
           const parsed = JSON.parse(saved);
-          if (parsed && Array.isArray(parsed.plots)) {
-            state = { ...state, ...parsed };
-          }
+          if (parsed && Array.isArray(parsed.plots)) state = { ...state, ...parsed };
         }
-      } catch(e) {}
+      } catch(e){}
     }
 
     function renderUI() {
@@ -602,6 +605,7 @@
 
     function renderSeedBar() {
       const container = document.getElementById('seed-bar');
+      if (!container) return;
       container.innerHTML = '';
       SEEDS.forEach(s => {
         const div = document.createElement('div');
@@ -616,14 +620,9 @@
     }
 
     function renderPlots() {
-      const wrapper = document.getElementById('plots-wrapper');
-      if (!wrapper) return;
-      wrapper.innerHTML = '';
-
       state.plots.forEach((p, idx) => {
-        const cell = document.createElement('div');
-        cell.className = 'plot-cell';
-        cell.onclick = () => handlePlotClick(idx);
+        const cell = document.getElementById(`plot-${idx}`);
+        if (!cell) return;
 
         if (p.crop) {
           const seed = SEEDS.find(s => s.id === p.crop);
@@ -631,6 +630,7 @@
           const isReady = elapsed >= p.duration;
 
           if (isReady) cell.classList.add('ripe');
+          else cell.classList.remove('ripe');
 
           cell.innerHTML = `
             <div class="plot-timer">${isReady ? 'THU HOẠCH!' : Math.ceil(p.duration - elapsed) + 's'}</div>
@@ -638,10 +638,9 @@
             <div class="progress-bar"><div class="progress-fill" style="width: ${Math.min(100, (elapsed / p.duration) * 100)}%"></div></div>
           `;
         } else {
+          cell.classList.remove('ripe');
           cell.innerHTML = `<div class="crop-icon" style="opacity: 0.25;">🕳️</div>`;
         }
-
-        wrapper.appendChild(cell);
       });
     }
 
@@ -703,7 +702,7 @@
       }
 
       if (state.gem < selectedGemCost) {
-        alert(`Bạn không đủ Kim Cương! Cần ${selectedGemCost.toLocaleString('vi-VN')} 💎 (Hiện có: ${state.gem.toLocaleString('vi-VN')} 💎).`);
+        alert(`Bạn không đủ Kim Cương! Cần ${selectedGemCost.toLocaleString('vi-VN')} 💎.`);
         return;
       }
 
@@ -778,7 +777,6 @@
       document.getElementById(id).classList.add('show');
       if (id === 'modal-daily') renderDaily();
       if (id === 'modal-ranks') renderRanks();
-      if (id === 'modal-invite') renderInvite();
     }
     function closeModal(id) { document.getElementById(id).classList.remove('show'); }
 
@@ -827,37 +825,19 @@
       `).join('');
     }
 
-    function renderInvite() {
-      const link = `https://t.me/telefarm_game_bot?startapp=ref_player`;
-      document.getElementById('ref-link-display').innerText = link;
-    }
-
     function shareInvite() {
       const link = `https://t.me/telefarm_game_bot?startapp=ref_player`;
       const text = encodeURIComponent('🌾 Vào nông trại TeleFarm trồng cây kiếm Kim Cương đổi thẻ cào tiền mặt nào!');
       window.open(`https://t.me/share/url?url=${encodeURIComponent(link)}&text=${text}`);
     }
 
-    // Khởi chạy an toàn
-    window.addEventListener('DOMContentLoaded', () => {
-      try {
-        const tg = window.Telegram?.WebApp;
-        if (tg) {
-          tg.ready();
-          tg.expand();
-          if (tg.initDataUnsafe?.user) {
-            document.getElementById('u-name').innerText = tg.initDataUnsafe.user.first_name || 'Bác Nông Dân';
-          }
-        }
-      } catch(e) {}
-
-      loadState();
-      renderUI();
-      renderPlots();
-      renderSeedBar();
-
-      setInterval(renderPlots, 1000);
-    });
+    // Khởi chạy ngay
+    loadState();
+    renderUI();
+    renderPlots();
+    renderSeedBar();
+    setInterval(renderPlots, 1000);
+    setupAdsgram();
   </script>
 </body>
 </html>
