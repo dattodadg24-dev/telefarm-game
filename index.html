@@ -9,115 +9,200 @@
   <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Quicksand:wght@500;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg-sky: linear-gradient(180deg, #70c5ff 0%, #a1dbff 50%, #cceeff 100%);
+      --primary: #4cd137;
+      --primary-dark: #44bd32;
+      --accent: #fbc531;
+      --accent-dark: #e1b12c;
       --gold: #ffbe0b;
-      --diamond: #0088cc;
-      --vnd-color: #2ed573;
+      --gem: #00a8ff;
+      --soil: #8b5a2b;
+      --soil-border: #5c3818;
+      --sky: linear-gradient(180deg, #48dbfb 0%, #a0e7fd 60%, #dff9fb 100%);
     }
-    * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-tap-highlight-color: transparent; }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
     body {
       font-family: 'Quicksand', sans-serif;
-      background: var(--bg-sky);
+      background: var(--sky);
       min-height: 100vh;
       display: flex;
       flex-direction: column;
       overflow-x: hidden;
-      color: #333;
+      color: #2f3640;
     }
+
+    /* Header Profile */
     header {
-      background: rgba(255, 255, 255, 0.9);
+      background: rgba(255, 255, 255, 0.92);
       backdrop-filter: blur(8px);
       padding: 10px 14px;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+      box-shadow: 0 4px 15px rgba(0,0,0,0.06);
       position: sticky;
       top: 0;
       z-index: 100;
     }
-    .user-info { display: flex; align-items: center; gap: 8px; }
-    .avatar { width: 42px; height: 42px; border-radius: 50%; background: #ffd166; display: flex; align-items: center; justify-content: center; font-size: 22px; border: 2px solid #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-    .user-name { font-weight: 700; font-size: 14px; max-width: 110px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .user-level { font-size: 11px; color: #666; font-weight: 600; }
-    .currency-bar { display: flex; gap: 8px; }
-    .badge {
+
+    .user-box {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .user-avatar {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: #fbc531;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      border: 3px solid #fff;
+      box-shadow: 0 3px 8px rgba(0,0,0,0.12);
+    }
+
+    .user-meta .name {
+      font-weight: 700;
+      font-size: 14px;
+      max-width: 110px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .user-meta .lv {
+      font-size: 11px;
+      color: #718093;
+      font-weight: 600;
+    }
+
+    .currencies {
+      display: flex;
+      gap: 8px;
+    }
+
+    .pill {
+      background: white;
+      padding: 6px 10px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 700;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
       display: flex;
       align-items: center;
       gap: 4px;
-      padding: 5px 10px;
-      border-radius: 16px;
-      background: white;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.08);
-      font-weight: 700;
-      font-size: 13px;
     }
-    .badge-gold { color: #d48b00; }
-    .badge-gem { color: var(--diamond); }
+
+    .pill.gold { color: #d48b00; }
+    .pill.gem { color: #0984e3; }
 
     /* Action bar */
-    .action-sub-bar {
+    .action-bar {
       display: flex;
       justify-content: space-between;
       align-items: center;
       padding: 8px 14px;
-      gap: 8px;
+      gap: 6px;
     }
-    .top-action-btn {
+
+    .action-btn {
       background: white;
       border: none;
-      padding: 6px 12px;
+      padding: 7px 12px;
       border-radius: 16px;
       font-size: 12px;
       font-weight: 700;
       cursor: pointer;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+      box-shadow: 0 3px 6px rgba(0,0,0,0.06);
       display: flex;
       align-items: center;
-      gap: 4px;
+      gap: 5px;
+      color: #333;
     }
-    .btn-withdraw-quick {
+
+    .action-btn.cashout {
       background: linear-gradient(135deg, #10ac84, #1dd1a1);
       color: white;
     }
 
-    /* Farm Field */
-    .farm-canvas-wrap {
+    /* Farm Island Area */
+    .farm-container {
       flex: 1;
-      padding: 10px 14px 85px 14px;
+      padding: 10px 14px 90px 14px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      max-width: 480px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    /* Island decoration header */
+    .farm-island {
+      background: rgba(255, 255, 255, 0.7);
+      border-radius: 24px;
+      padding: 16px;
+      width: 100%;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+      border: 3px solid #ffffff;
       display: flex;
       flex-direction: column;
       align-items: center;
     }
-    .corgi-helper {
-      background: white;
-      border-radius: 20px;
-      padding: 8px 16px;
+
+    .island-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      width: 100%;
       margin-bottom: 14px;
+    }
+
+    .island-title {
+      font-family: 'Fredoka One', cursive;
+      font-size: 16px;
+      color: #2f3640;
+    }
+
+    .corgi-box {
+      background: #fff;
+      border: 2px solid #fbc531;
+      border-radius: 16px;
+      padding: 8px 14px;
       display: flex;
       align-items: center;
-      gap: 10px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+      gap: 8px;
       cursor: pointer;
-      border: 2px solid #ffeaa7;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+      margin-bottom: 16px;
       width: 100%;
-      max-width: 400px;
+      justify-content: center;
     }
-    .corgi-img { font-size: 28px; }
-    .corgi-text { font-size: 12px; font-weight: 700; color: #555; }
-    .corgi-btn-label { color: #e17055; font-size: 11px; }
 
+    .corgi-box:active { transform: scale(0.98); }
+
+    /* Land Plots Grid */
     .plots-grid {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
       gap: 12px;
       width: 100%;
-      max-width: 400px;
     }
-    .plot {
-      background: #8b5a2b;
-      border: 3px solid #6d451e;
-      border-radius: 16px;
+
+    .plot-cell {
+      background: #966138;
+      border: 3px solid #6b4020;
+      border-radius: 18px;
       aspect-ratio: 1;
       display: flex;
       flex-direction: column;
@@ -125,14 +210,45 @@
       justify-content: center;
       position: relative;
       cursor: pointer;
-      box-shadow: 0 4px 0 #543415, inset 0 2px 6px rgba(0,0,0,0.3);
-      transition: transform 0.1s;
+      box-shadow: 0 5px 0 #4a2810, inset 0 3px 8px rgba(0,0,0,0.3);
+      transition: transform 0.1s, box-shadow 0.2s;
       overflow: hidden;
     }
-    .plot:active { transform: translateY(2px); }
-    .plot.ready { border-color: #2ed573; box-shadow: 0 0 10px #2ed573; }
-    .plot-icon { font-size: 32px; z-index: 2; }
-    .plot-progress {
+
+    .plot-cell:active { transform: translateY(3px); box-shadow: 0 2px 0 #4a2810; }
+    .plot-cell.ripe {
+      border-color: #2ed573;
+      box-shadow: 0 5px 0 #4a2810, 0 0 12px rgba(46, 213, 115, 0.8);
+    }
+
+    .plot-cell .crop-icon {
+      font-size: 36px;
+      filter: drop-shadow(0 4px 6px rgba(0,0,0,0.2));
+      transition: transform 0.2s;
+    }
+
+    .plot-cell.ripe .crop-icon {
+      animation: pulse 1s infinite alternate;
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      100% { transform: scale(1.15); }
+    }
+
+    .plot-timer {
+      position: absolute;
+      top: 6px;
+      font-size: 10px;
+      font-weight: 700;
+      color: #fff;
+      text-shadow: 0 1px 3px black;
+      background: rgba(0,0,0,0.3);
+      padding: 1px 6px;
+      border-radius: 8px;
+    }
+
+    .progress-bar {
       position: absolute;
       bottom: 6px;
       left: 10%;
@@ -142,620 +258,45 @@
       border-radius: 4px;
       overflow: hidden;
     }
-    .plot-bar { height: 100%; width: 0%; background: #2ed573; transition: width 0.3s; }
-    .plot-time { position: absolute; top: 6px; font-size: 10px; font-weight: 700; color: white; text-shadow: 0 1px 2px black; }
 
-    /* Bottom Navigation */
+    .progress-fill {
+      height: 100%;
+      width: 0%;
+      background: #2ed573;
+      transition: width 0.3s;
+    }
+
+    /* Seed Selector Bar */
+    .seed-bar {
+      margin-top: 16px;
+      display: flex;
+      gap: 8px;
+      width: 100%;
+      overflow-x: auto;
+      padding: 4px 2px;
+    }
+
+    .seed-item {
+      background: white;
+      border: 2px solid #ddd;
+      border-radius: 14px;
+      padding: 6px 10px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .seed-item.selected {
+      border-color: #4cd137;
+      background: #eafaf1;
+    }
+
+    /* Bottom Navigation Bar */
     .bottom-nav {
       position: fixed;
       bottom: 0;
       left: 0;
-      right: 0;
-      height: 68px;
-      background: white;
-      display: flex;
-      justify-content: space-around;
-      align-items: center;
-      box-shadow: 0 -3px 12px rgba(0,0,0,0.08);
-      z-index: 100;
-      padding-bottom: env(safe-area-inset-bottom);
-    }
-    .nav-btn {
-      background: none;
-      border: none;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 3px;
-      cursor: pointer;
-      font-size: 11px;
-      font-weight: 700;
-      color: #777;
-      width: 20%;
-    }
-    .nav-btn.special-reward { color: #10ac84; }
-    .nav-btn span.icon { font-size: 22px; }
-
-    /* Modals */
-    .modal {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.6);
-      z-index: 200;
-      align-items: center;
-      justify-content: center;
-      padding: 16px;
-    }
-    .modal.show { display: flex; }
-    .modal-card {
-      background: white;
-      border-radius: 20px;
-      width: 100%;
-      max-width: 380px;
-      max-height: 85vh;
-      overflow-y: auto;
-      padding: 20px;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.25);
-      display: flex;
-      flex-direction: column;
-      gap: 14px;
-    }
-    .modal-title { font-family: 'Fredoka One', cursive; font-size: 19px; color: #333; text-align: center; }
-    .close-btn {
-      background: #eee;
-      border: none;
-      padding: 10px;
-      border-radius: 12px;
-      font-weight: 700;
-      cursor: pointer;
-      margin-top: 6px;
-    }
-    .card-item {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 10px;
-      border: 1px solid #eee;
-      border-radius: 12px;
-    }
-    .btn-action {
-      background: #2ed573;
-      border: none;
-      color: white;
-      padding: 8px 14px;
-      border-radius: 14px;
-      font-weight: 700;
-      font-size: 12px;
-      cursor: pointer;
-    }
-
-    /* Đổi thưởng form */
-    .rate-box {
-      background: #e8f8f5;
-      border: 1px solid #1dd1a1;
-      border-radius: 12px;
-      padding: 10px;
-      text-align: center;
-      font-size: 13px;
-      font-weight: 600;
-      color: #10ac84;
-    }
-    .reward-tiers {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 8px;
-    }
-    .tier-btn {
-      border: 2px solid #e0e0e0;
-      background: #fff;
-      border-radius: 12px;
-      padding: 10px;
-      text-align: center;
-      cursor: pointer;
-      font-weight: 700;
-      font-size: 12px;
-    }
-    .tier-btn.selected {
-      border-color: #10ac84;
-      background: #f0fff4;
-      color: #10ac84;
-    }
-    .form-group {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-      font-size: 12px;
-      font-weight: 700;
-      color: #555;
-    }
-    .form-group input, .form-group select {
-      padding: 10px;
-      border: 1px solid #ddd;
-      border-radius: 10px;
-      font-family: inherit;
-      font-size: 13px;
-      outline: none;
-    }
-    .history-card {
-      background: #f9f9f9;
-      padding: 8px 12px;
-      border-radius: 10px;
-      font-size: 11px;
-      margin-top: 6px;
-    }
-  </style>
-</head>
-<body>
-
-  <!-- Top bar -->
-  <header>
-    <div class="user-info">
-      <div class="avatar" id="u-avatar">👨‍🌾</div>
-      <div>
-        <div class="user-name" id="u-name">Bác Nông Dân</div>
-        <div class="user-level" id="u-lv">Cấp 1 • Tân Thủ</div>
-      </div>
-    </div>
-    <div class="currency-bar">
-      <div class="badge badge-gold">🪙 <span id="val-gold">200</span></div>
-      <div class="badge badge-gem">💎 <span id="val-gem">500,000</span></div>
-    </div>
-  </header>
-
-  <!-- Sub actions -->
-  <div class="action-sub-bar">
-    <div class="top-action-btn" onclick="openModal('modal-daily')">📅 Điểm danh</div>
-    <div class="top-action-btn" onclick="openModal('modal-ranks')">🏆 Top Phú Nông</div>
-    <button class="top-action-btn btn-withdraw-quick" onclick="openModal('modal-withdraw')">💵 Đổi Thưởng VND</button>
-  </div>
-
-  <!-- Farm Area -->
-  <main class="farm-canvas-wrap">
-    <div class="corgi-helper" onclick="corgiHarvestAll()">
-      <div class="corgi-img">🐕</div>
-      <div>
-        <div class="corgi-text">Corgi Trợ Lý: Chạm để thu hoạch & tưới nước cả vườn!</div>
-        <div class="corgi-btn-label">Tự động hóa hoàn toàn ✨</div>
-      </div>
-    </div>
-
-    <div class="plots-grid" id="plots-container"></div>
-  </main>
-
-  <!-- Bottom Navigation -->
-  <nav class="bottom-nav">
-    <button class="nav-btn" onclick="openModal('modal-seeds')"><span class="icon">🌾</span>Cây trồng</button>
-    <button class="nav-btn" onclick="openModal('modal-barn')"><span class="icon">🐔</span>Chăn nuôi</button>
-    <button class="nav-btn special-reward" onclick="openModal('modal-withdraw')"><span class="icon">💵</span><b>Đổi VND</b></button>
-    <button class="nav-btn" onclick="openModal('modal-orders')"><span class="icon">📜</span>Đơn hàng</button>
-    <button class="nav-btn" onclick="openModal('modal-invite')"><span class="icon">🎁</span>Mời bạn</button>
-  </nav>
-
-  <!-- MODAL: ĐỔI THƯỞNG RA TIỀN VIỆT (VND) -->
-  <div class="modal" id="modal-withdraw">
-    <div class="modal-card">
-      <h3 class="modal-title">💵 Đổi Thưởng Ra Tiền Việt</h3>
-      
-      <div class="rate-box">
-        💎 Số dư hiện có: <b id="withdraw-current-gem">0</b> Kim Cương<br>
-        <span style="font-size:11px; color:#555;">Tỷ lệ: <b>2.000.000 💎 = 2.000 VNĐ</b> (1.000 💎 = 1đ)</span>
-      </div>
-
-      <div style="font-size: 13px; font-weight: 700;">1. Chọn gói muốn đổi:</div>
-      <div class="reward-tiers">
-        <div class="tier-btn selected" onclick="selectTier(2000000, 2000, this)">2.000.000 💎<br><small>2.000đ</small></div>
-        <div class="tier-btn" onclick="selectTier(5000000, 5000, this)">5.000.000 💎<br><small>5.000đ</small></div>
-        <div class="tier-btn" onclick="selectTier(10000000, 10000, this)">10.000.000 💎<br><small>10.000đ</small></div>
-        <div class="tier-btn" onclick="selectTier(20000000, 20000, this)">20.000.000 💎<br><small>20.000đ</small></div>
-      </div>
-
-      <div class="form-group">
-        <label>2. Phương thức nhận tiền:</label>
-        <select id="w-method">
-          <option value="Chuyển khoản Ngân Hàng (24/7)">Chuyển khoản Ngân Hàng (24/7)</option>
-          <option value="Ví Điện Tử MoMo">Ví Điện Tử MoMo</option>
-          <option value="Thẻ Viettel / Vina / Mobi">Thẻ cào Điện thoại</option>
-        </select>
-      </div>
-
-      <div class="form-group">
-        <label>3. Thông tin nhận thưởng:</label>
-        <input type="text" id="w-account" placeholder="Số TK ngân hàng / SĐT MoMo">
-        <input type="text" id="w-name" placeholder="Tên chủ tài khoản hoặc Tên Ngân Hàng">
-      </div>
-
-      <button class="btn-action" style="padding: 12px; font-size: 14px; background: #10ac84;" onclick="submitWithdraw()">XÁC NHẬN ĐỔI THƯỞNG</button>
-      
-      <!-- Lịch sử đổi -->
-      <div style="font-size: 12px; font-weight: 700; margin-top: 4px;">Lịch sử đổi gần đây:</div>
-      <div id="withdraw-history"></div>
-
-      <button class="close-btn" onclick="closeModal('modal-withdraw')">Đóng</button>
-    </div>
-  </div>
-
-  <!-- MODAL: HẠT GIỐNG -->
-  <div class="modal" id="modal-seeds">
-    <div class="modal-card">
-      <h3 class="modal-title">🌾 Cửa Hàng Hạt Giống</h3>
-      <div id="seed-list" style="display: flex; flex-direction: column; gap: 8px;"></div>
-      <button class="close-btn" onclick="closeModal('modal-seeds')">Đóng</button>
-    </div>
-  </div>
-
-  <!-- MODAL: ĐIỂM DANH -->
-  <div class="modal" id="modal-daily">
-    <div class="modal-card">
-      <h3 class="modal-title">📅 Điểm Danh 7 Ngày</h3>
-      <p style="font-size: 13px; text-align: center; color: #666;">Điểm danh mỗi ngày tích lũy Kim Cương đổi quà lớn!</p>
-      <div id="daily-rewards" style="display: flex; flex-direction: column; gap: 8px;"></div>
-      <button class="close-btn" onclick="closeModal('modal-daily')">Đóng</button>
-    </div>
-  </div>
-
-  <!-- MODAL: BẢNG XẾP HẠNG -->
-  <div class="modal" id="modal-ranks">
-    <div class="modal-card">
-      <h3 class="modal-title">🏆 Top Phú Nông</h3>
-      <div id="rank-list" style="display: flex; flex-direction: column; gap: 8px;"></div>
-      <button class="close-btn" onclick="closeModal('modal-ranks')">Đóng</button>
-    </div>
-  </div>
-
-  <!-- MODAL: MỜI BẠN BÈ -->
-  <div class="modal" id="modal-invite">
-    <div class="modal-card">
-      <h3 class="modal-title">🎁 Mời Bạn - Nhận Kim Cương Khủng</h3>
-      <p style="font-size: 13px; text-align: center; color: #555;">Mỗi người bạn tham gia qua liên kết sẽ mang về cho bạn <b>+200.000 💎 và 2.000 🪙</b>!</p>
-      <div style="background: #f8f9fa; padding: 12px; border-radius: 12px; word-break: break-all; font-size: 12px;" id="ref-link-display"></div>
-      <button class="btn-action" style="padding: 10px; width: 100%; margin-top: 8px;" onclick="shareInvite()">Gửi Lời Mời Ngay</button>
-      <button class="close-btn" onclick="closeModal('modal-invite')">Đóng</button>
-    </div>
-  </div>
-
-  <!-- MODAL: CHĂN NUÔI -->
-  <div class="modal" id="modal-barn">
-    <div class="modal-card">
-      <h3 class="modal-title">🐔 Chuồng Trại Chăn Nuôi</h3>
-      <div class="card-item">
-        <div><b>Gà Đẻ Trứng 🥚</b><div style="font-size:12px;color:#777">Cần 2 Lúa mạch ➔ Nhận Vàng + 15.000 💎</div></div>
-        <button class="btn-action" onclick="feedAnimal('chicken')">Cho ăn</button>
-      </div>
-      <div class="card-item">
-        <div><b>Bò Sữa 🥛</b><div style="font-size:12px;color:#777">Cần 2 Cà rốt ➔ Nhận Vàng + 35.000 💎</div></div>
-        <button class="btn-action" onclick="feedAnimal('cow')">Cho ăn</button>
-      </div>
-      <button class="close-btn" onclick="closeModal('modal-barn')">Đóng</button>
-    </div>
-  </div>
-
-  <!-- MODAL: ĐƠN HÀNG -->
-  <div class="modal" id="modal-orders">
-    <div class="modal-card">
-      <h3 class="modal-title">📜 Đơn Hàng Thương Lái</h3>
-      <div class="card-item">
-        <div><b>Đơn Làng Mây: 5 Lúa mạch</b><div style="font-size:12px;color:#10ac84;">Thưởng: +200🪙 & +50.000 💎</div></div>
-        <button class="btn-action" onclick="completeOrder('wheat', 5, 200, 50000)">Giao hàng</button>
-      </div>
-      <div class="card-item">
-        <div><b>Đơn Thị Trấn: 3 Cà rốt</b><div style="font-size:12px;color:#10ac84;">Thưởng: +350🪙 & +100.000 💎</div></div>
-        <button class="btn-action" onclick="completeOrder('carrot', 3, 350, 100000)">Giao hàng</button>
-      </div>
-      <button class="close-btn" onclick="closeModal('modal-orders')">Đóng</button>
-    </div>
-  </div>
-
-  <script>
-    const tg = window.Telegram?.WebApp;
-    if (tg) {
-      tg.ready();
-      tg.expand();
-      if (tg.initDataUnsafe?.user) {
-        document.getElementById('u-name').innerText = tg.initDataUnsafe.user.first_name || 'Bác Nông Dân';
-      }
-    }
-
-    const SEEDS = [
-      { id: 'wheat', name: 'Lúa mạch', icon: '🌾', seedPrice: 10, sellPrice: 20, time: 5, exp: 5 },
-      { id: 'carrot', name: 'Cà rốt', icon: '🥕', seedPrice: 25, sellPrice: 50, time: 10, exp: 12 },
-      { id: 'tomato', name: 'Cà chua', icon: '🍅', seedPrice: 60, sellPrice: 130, time: 20, exp: 30 },
-      { id: 'strawberry', name: 'Dâu tây', icon: '🍓', seedPrice: 150, sellPrice: 350, time: 40, exp: 75 }
-    ];
-
-    let state = {
-      gold: 500,
-      gem: 500000, // Tặng sẵn 500.000 kim cương khởi đầu
-      exp: 0,
-      lv: 1,
-      selectedSeed: 'wheat',
-      plots: [
-        { crop: 'wheat', plantedAt: Date.now() - 10000, duration: 5 },
-        { crop: 'carrot', plantedAt: Date.now() - 15000, duration: 10 },
-        { crop: null, plantedAt: 0, duration: 0 },
-        { crop: null, plantedAt: 0, duration: 0 },
-        { crop: null, plantedAt: 0, duration: 0 },
-        { crop: null, plantedAt: 0, duration: 0 }
-      ],
-      inventory: { wheat: 5, carrot: 5, tomato: 0, strawberry: 0 },
-      dailyClaimedDay: 0,
-      withdrawHistory: []
-    };
-
-    let selectedGemCost = 2000000;
-    let selectedVNDAmount = 2000;
-
-    function loadGame() {
-      const saved = localStorage.getItem('telefarm_save_prod_v2');
-      if (saved) {
-        try { state = { ...state, ...JSON.parse(saved) }; } catch(e){}
-      }
-      renderUI();
-      renderPlots();
-    }
-
-    function saveGame() {
-      localStorage.setItem('telefarm_save_prod_v2', JSON.stringify(state));
-      if (tg?.CloudStorage) {
-        tg.CloudStorage.setItem('telefarm_save_prod_v2', JSON.stringify(state));
-      }
-    }
-
-    function renderUI() {
-      document.getElementById('val-gold').innerText = state.gold.toLocaleString('vi-VN');
-      document.getElementById('val-gem').innerText = state.gem.toLocaleString('vi-VN');
-      document.getElementById('withdraw-current-gem').innerText = state.gem.toLocaleString('vi-VN');
-      document.getElementById('u-lv').innerText = `Cấp ${state.lv} • Nông Dân`;
-      renderWithdrawHistory();
-    }
-
-    function renderPlots() {
-      const container = document.getElementById('plots-container');
-      container.innerHTML = '';
-      state.plots.forEach((p, idx) => {
-        const plotEl = document.createElement('div');
-        plotEl.className = 'plot';
-        plotEl.onclick = () => onPlotClick(idx);
-
-        if (p.crop) {
-          const seed = SEEDS.find(s => s.id === p.crop);
-          const elapsed = (Date.now() - p.plantedAt) / 1000;
-          const ready = elapsed >= p.duration;
-          if (ready) plotEl.classList.add('ready');
-
-          plotEl.innerHTML = `
-            <div class="plot-time">${ready ? 'THU HOẠCH!' : Math.ceil(p.duration - elapsed) + 's'}</div>
-            <div class="plot-icon">${seed ? seed.icon : '🌱'}</div>
-            <div class="plot-progress"><div class="plot-bar" style="width: ${Math.min(100, (elapsed/p.duration)*100)}%"></div></div>
-          `;
-        } else {
-          plotEl.innerHTML = `<div class="plot-icon" style="opacity: 0.3;">🕳️</div>`;
-        }
-        container.appendChild(plotEl);
-      });
-    }
-
-    function onPlotClick(idx) {
-      const p = state.plots[idx];
-      if (!p.crop) {
-        const seed = SEEDS.find(s => s.id === state.selectedSeed);
-        if (state.gold >= seed.seedPrice) {
-          state.gold -= seed.seedPrice;
-          p.crop = seed.id;
-          p.plantedAt = Date.now();
-          p.duration = seed.time;
-          saveGame();
-          renderUI();
-          renderPlots();
-        } else {
-          alert('Không đủ vàng mua hạt giống!');
-        }
-      } else {
-        const elapsed = (Date.now() - p.plantedAt) / 1000;
-        if (elapsed >= p.duration) {
-          const seed = SEEDS.find(s => s.id === p.crop);
-          state.gold += seed.sellPrice;
-          state.exp += seed.exp;
-          state.inventory[seed.id] = (state.inventory[seed.id] || 0) + 1;
-          p.crop = null;
-          saveGame();
-          renderUI();
-          renderPlots();
-        }
-      }
-    }
-
-    function corgiHarvestAll() {
-      let count = 0;
-      state.plots.forEach((p, idx) => {
-        if (p.crop && (Date.now() - p.plantedAt)/1000 >= p.duration) {
-          onPlotClick(idx);
-          count++;
-        }
-      });
-      if (count === 0) alert('Corgi: Chưa có cây nào chín cả bạn ơi! 🐕');
-    }
-
-    /* ĐỔI THƯỞNG LOGIC */
-    function selectTier(gemCost, vndAmount, el) {
-      selectedGemCost = gemCost;
-      selectedVNDAmount = vndAmount;
-      document.querySelectorAll('.tier-btn').forEach(btn => btn.classList.remove('selected'));
-      el.classList.add('selected');
-    }
-
-    function submitWithdraw() {
-      const method = document.getElementById('w-method').value;
-      const account = document.getElementById('w-account').value.trim();
-      const name = document.getElementById('w-name').value.trim();
-
-      if (!account || !name) {
-        alert('Vui lòng điền đầy đủ số tài khoản và họ tên nhận tiền!');
-        return;
-      }
-
-      if (state.gem < selectedGemCost) {
-        alert(`Bạn không đủ Kim Cương! Cần ${selectedGemCost.toLocaleString('vi-VN')} 💎 nhưng bạn chỉ có ${state.gem.toLocaleString('vi-VN')} 💎.`);
-        return;
-      }
-
-      // Trừ kim cương & lưu lịch sử
-      state.gem -= selectedGemCost;
-      const order = {
-        date: new Date().toLocaleTimeString('vi-VN', {hour: '2-digit', minute:'2-digit', day:'2-digit', month:'2-digit'}),
-        amount: selectedVNDAmount.toLocaleString('vi-VN') + 'đ',
-        status: 'Đang xử lý (1-24h)',
-        method: method,
-        info: `${account} (${name})`
-      };
-      state.withdrawHistory.unshift(order);
-      saveGame();
-      renderUI();
-
-      alert(`✅ Gửi yêu cầu đổi ${order.amount} thành công!\nAdmin sẽ duyệt và chuyển khoản đến ${account} trong thời gian sớm nhất.`);
-      
-      if (tg) {
-        tg.sendData?.(JSON.stringify({ action: "withdraw", data: order }));
-      }
-    }
-
-    function renderWithdrawHistory() {
-      const container = document.getElementById('withdraw-history');
-      if (!container) return;
-      if (state.withdrawHistory.length === 0) {
-        container.innerHTML = '<div style="font-size:11px;color:#999;text-align:center;padding:6px;">Chưa có lịch sử rút tiền</div>';
-        return;
-      }
-      container.innerHTML = state.withdrawHistory.slice(0, 3).map(h => `
-        <div class="history-card">
-          <div style="display:flex; justify-content:space-between; font-weight:700;">
-            <span>${h.amount} (${h.method})</span>
-            <span style="color:#d48b00;">${h.status}</span>
-          </div>
-          <div style="color:#666; margin-top:2px;">Nhận: ${h.info} • ${h.date}</div>
-        </div>
-      `).join('');
-    }
-
-    /* CHĂN NUÔI & ĐƠN HÀNG */
-    function feedAnimal(type) {
-      if (type === 'chicken') {
-        if ((state.inventory.wheat || 0) >= 2) {
-          state.inventory.wheat -= 2;
-          state.gold += 35;
-          state.gem += 15000;
-          saveGame();
-          renderUI();
-          alert('Thu hoạch 1 Quả trứng 🥚 (+35🪙 & +15.000💎)!');
-        } else alert('Cần 2 Lúa mạch để cho gà ăn!');
-      } else if (type === 'cow') {
-        if ((state.inventory.carrot || 0) >= 2) {
-          state.inventory.carrot -= 2;
-          state.gold += 85;
-          state.gem += 35000;
-          saveGame();
-          renderUI();
-          alert('Thu hoạch 1 Bình sữa 🥛 (+85🪙 & +35.000💎)!');
-        } else alert('Cần 2 Cà rốt để cho bò ăn!');
-      }
-    }
-
-    function completeOrder(cropId, countReq, goldReward, gemReward) {
-      if ((state.inventory[cropId] || 0) >= countReq) {
-        state.inventory[cropId] -= countReq;
-        state.gold += goldReward;
-        state.gem += gemReward;
-        saveGame();
-        renderUI();
-        alert(`Giao hàng thành công! Nhận ngay +${goldReward}🪙 và +${gemReward.toLocaleString('vi-VN')}💎!`);
-      } else {
-        alert(`Bạn chưa đủ số lượng nông sản để giao hàng!`);
-      }
-    }
-
-    function openModal(id) {
-      document.getElementById(id).classList.add('show');
-      if (id === 'modal-seeds') renderSeeds();
-      if (id === 'modal-daily') renderDaily();
-      if (id === 'modal-ranks') renderRanks();
-      if (id === 'modal-invite') renderInvite();
-    }
-    function closeModal(id) { document.getElementById(id).classList.remove('show'); }
-
-    function renderSeeds() {
-      const list = document.getElementById('seed-list');
-      list.innerHTML = '';
-      SEEDS.forEach(s => {
-        const item = document.createElement('div');
-        item.className = 'card-item';
-        item.innerHTML = `
-          <div><b>${s.icon} ${s.name}</b> (${s.time}s)<div style="font-size:12px;color:#777">Mua: ${s.seedPrice}🪙 • Thu: ${s.sellPrice}🪙</div></div>
-          <button class="btn-action" onclick="state.selectedSeed='${s.id}'; closeModal('modal-seeds');">Chọn trồng</button>
-        `;
-        list.appendChild(item);
-      });
-    }
-
-    function renderDaily() {
-      const container = document.getElementById('daily-rewards');
-      container.innerHTML = '';
-      for (let i = 1; i <= 7; i++) {
-        const row = document.createElement('div');
-        row.className = 'card-item';
-        const gemReward = i * 50000;
-        row.innerHTML = `
-          <div><b>Ngày ${i}</b>: +${i * 100}🪙 +${gemReward.toLocaleString('vi-VN')}💎</div>
-          <button class="btn-action" ${state.dailyClaimedDay >= i ? 'disabled style="background:#bbb;"' : ''} onclick="claimDaily(${i}, ${gemReward})">
-            ${state.dailyClaimedDay >= i ? 'Đã nhận' : 'Nhận'}
-          </button>
-        `;
-        container.appendChild(row);
-      }
-    }
-
-    function claimDaily(day, gemReward) {
-      if (day === state.dailyClaimedDay + 1) {
-        state.dailyClaimedDay = day;
-        state.gold += day * 100;
-        state.gem += gemReward;
-        saveGame();
-        renderUI();
-        renderDaily();
-        alert(`Nhận thành công quà Ngày ${day}!`);
-      } else alert('Vui lòng điểm danh theo thứ tự từng ngày!');
-    }
-
-    function renderRanks() {
-      const list = document.getElementById('rank-list');
-      const fakeRanks = [
-        { name: "Minh Anh", gold: "1,240,000", lv: 25 },
-        { name: "Đạt Dương", gold: "980,500", lv: 21 },
-        { name: "Hoàng Long", gold: "640,000", lv: 18 },
-        { name: "Bác Nông Dân (Bạn)", gold: state.gold.toLocaleString(), lv: state.lv }
-      ];
-      list.innerHTML = fakeRanks.map((r, i) => `
-        <div class="card-item">
-          <div><b>#${i+1} ${r.name}</b><div style="font-size:12px;color:#777">Cấp ${r.lv}</div></div>
-          <span style="font-weight:700;color:#d48b00;">${r.gold} 🪙</span>
-        </div>
-      `).join('');
-    }
-
-    function renderInvite() {
-      const userId = tg?.initDataUnsafe?.user?.id || 'demo_user';
-      const link = `https://t.me/telefarm_game_bot?startapp=ref_${userId}`;
-      document.getElementById('ref-link-display').innerText = link;
-    }
-
-    function shareInvite() {
-      const userId = tg?.initDataUnsafe?.user?.id || 'demo_user';
-      const link = `https://t.me/telefarm_game_bot?startapp=ref_${userId}`;
-      const text = encodeURIComponent('🌾 Tham gia nông trại TeleFarm để cày Kim Cương đổi thẻ cào & tiền mặt VND mỗi ngày!');
-      window.open(`https://t.me/share/url?url=${encodeURIComponent(link)}&text=${text}`);
-    }
-
-    setInterval(renderPlots, 1000);
-    loadGame();
-  </script>
-</body>
-</html>
